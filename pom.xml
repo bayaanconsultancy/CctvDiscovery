@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.cctv</groupId>
+    <artifactId>cctv-discovery</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    
+    <name>CCTV Discovery</name>
+    <description>IP camera discovery and analysis tool</description>
+    <inceptionYear>2025</inceptionYear>
+    <organization>
+        <name>CCTV Discovery</name>
+    </organization>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <javacv.version>1.5.9</javacv.version>
+        <cert.password>${env.USERNAME}-${project.version}</cert.password>
+    </properties>
+
+    <dependencies>
+        <!-- JavaCV with FFmpeg only -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv</artifactId>
+            <version>${javacv.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>6.0-${javacv.version}</version>
+            <classifier>windows-x86_64</classifier>
+        </dependency>
+
+        <!-- Apache POI for Excel -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+        
+        <!-- Log4j to SLF4J bridge to suppress POI warnings -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.20.0</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.36</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.cctv.Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.3.3</version>
+                <executions>
+                    <execution>
+                        <id>launch4j</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <jar>${project.build.directory}/${project.artifactId}-${project.version}-jar-with-dependencies.jar</jar>
+                            <outfile>${project.build.directory}/CctvDiscovery.exe</outfile>
+                            <errTitle>CCTV Discovery</errTitle>
+                            <icon>src/main/resources/icon.ico</icon>
+                            <classPath>
+                                <mainClass>com.cctv.Main</mainClass>
+                            </classPath>
+                            <jre>
+                                <path>jre</path>
+                                <minVersion>1.8.0</minVersion>
+                                <opts>
+                                    <opt>-Dfile.encoding=UTF-8</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>1.0.0</txtFileVersion>
+                                <fileDescription>CCTV Discovery Tool</fileDescription>
+                                <copyright>2024</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0</txtProductVersion>
+                                <productName>CCTV Discovery</productName>
+                                <internalName>CctvDiscovery</internalName>
+                                <originalFilename>CctvDiscovery.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>create-certificate</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>powershell</executable>
+                            <arguments>
+                                <argument>-Command</argument>
+                                <argument>
+                                    if (-not (Test-Path "${project.build.directory}\cert.pfx")) {
+                                        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=TCSiON, OU=iON, O=Tata Consultancy Services Ltd., L=Kolkata, S=West Bengal, C=IN' -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation Cert:\CurrentUser\My;
+                                        $pwd = ConvertTo-SecureString -String '${cert.password}' -Force -AsPlainText;
+                                        Export-PfxCertificate -Cert $cert -FilePath "${project.build.directory}\cert.pfx" -Password $pwd -ChainOption BuildChain
+                                    }
+                                </argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>sign-executable</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipSigning}</skip>
+                            <executable>signtool</executable>
+                            <arguments>
+                                <argument>sign</argument>
+                                <argument>/f</argument>
+                                <argument>${project.build.directory}\cert.pfx</argument>
+                                <argument>/p</argument>
+                                <argument>${cert.password}</argument>
+                                <argument>/fd</argument>
+                                <argument>SHA256</argument>
+                                <argument>/t</argument>
+                                <argument>http://timestamp.digicert.com</argument>
+                                <argument>${project.build.directory}\CctvDiscovery.exe</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/dist/jre</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/jre8</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-exe</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy file="${project.build.directory}/CctvDiscovery.exe" todir="${project.build.directory}/dist"/>
+                                <copy file="${project.basedir}/rtsp-patterns.txt" todir="${project.build.directory}/dist"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>create-zip</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <zip destfile="${project.build.directory}/CctvDiscovery-${project.version}-windows-x64.zip" basedir="${project.build.directory}/dist"/>
+                                <echo level="info" message="Distribution ZIP: ${project.build.directory}/CctvDiscovery-${project.version}-windows-x64.zip"/>
+                                <echo level="info" message="Executable Sequence: ${cert.password}"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

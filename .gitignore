@@ -1,0 +1,9 @@
+target/
+jre8/
+*.log
+*.class
+.idea/
+*.iml
+.settings/
+.project
+.classpath

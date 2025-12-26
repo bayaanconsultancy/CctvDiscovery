@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTV Discovery Tool - User Manual</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #7f8c8d;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+        .note {
+            background: #fff3cd;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .warning {
+            background: #f8d7da;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #dc3545;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        ul {
+            margin: 10px 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>CCTV Discovery Tool - User Manual</h1>
+    
+    <h2>1. Overview</h2>
+    <p>The CCTV Discovery Tool is a Java-based application designed to automatically discover, analyze, and document IP cameras and NVR/DVR systems on local networks. It uses ONVIF WS-Discovery protocol and port scanning to find devices, then attempts to connect and analyze their video streams. For NVR/DVR systems, it automatically detects and extracts all available channels.</p>
+    
+    <h2>2. System Requirements</h2>
+    <ul>
+        <li>Windows Operating System</li>
+        <li>Java Runtime Environment (JRE) 1.8 or higher</li>
+        <li>Network access to camera devices</li>
+        <li>Minimum 4GB RAM recommended</li>
+    </ul>
+    
+    <h2>3. Installation</h2>
+    <div class="step">
+        <strong>Step 1:</strong> Extract the application files to a folder on your computer<br>
+        <strong>Step 2:</strong> Ensure Java is installed by opening Command Prompt and typing: <code>java -version</code><br>
+        <strong>Step 3:</strong> Double-click <code>CctvDiscovery.exe</code> to launch the application
+    </div>
+    
+    <h2>4. Getting Started</h2>
+    
+    <h3>4.1 Network Interface Selection</h3>
+    <div class="step">
+        <p>When you launch the application, you'll see a dropdown menu to select your network interface:</p>
+        <ul>
+            <li>Select the network adapter connected to the same network as your cameras</li>
+            <li>Alternatively, enter a custom IP range (e.g., <code>192.168.1.1-192.168.1.254</code>)</li>
+        </ul>
+    </div>
+    
+    <h3>4.2 Discovery Process</h3>
+    <div class="step">
+        <strong>ONVIF Discovery:</strong>
+        <ul>
+            <li>Click the "Start Discovery" button</li>
+            <li>The tool will broadcast ONVIF discovery messages</li>
+            <li>ONVIF-compliant cameras will respond automatically</li>
+            <li>Discovery typically completes in 5-10 seconds</li>
+        </ul>
+        
+        <strong>Port Scanning (Optional):</strong>
+        <ul>
+            <li>Click "Port Scan" to find additional devices</li>
+            <li>Scans common camera ports: 554, 8554, 80, 8080</li>
+            <li>Useful for cameras without ONVIF support</li>
+            <li>May take several minutes depending on IP range</li>
+        </ul>
+    </div>
+    
+    <h3>4.3 Credential Management</h3>
+    <div class="step">
+        <p>To analyze camera streams, you must provide credentials:</p>
+        <ul>
+            <li><strong>Individual Assignment:</strong> Right-click a camera and enter username/password</li>
+            <li><strong>Bulk Assignment:</strong> Click "Assign Credentials" to apply the same credentials to multiple cameras</li>
+        </ul>
+    </div>
+    
+    <div class="note">
+        <strong>Note:</strong> Common default credentials are <code>admin/admin</code>, <code>admin/12345</code>, or <code>admin/[blank]</code>. Check your camera manufacturer's documentation.
+    </div>
+    
+    <h3>4.4 Stream Analysis</h3>
+    <div class="step">
+        <p>Once credentials are assigned, the tool automatically:</p>
+        <ul>
+            <li>Tests RTSP URL patterns from built-in database</li>
+            <li>Only tests ports discovered during port scan (554, 8554)</li>
+            <li>Stops testing once main and sub streams are found</li>
+            <li>Uses multi-threaded processing (one thread per CPU core)</li>
+            <li>Analyzes stream properties using FFmpeg</li>
+            <li><strong>Detects NVR/DVR systems and extracts all channels automatically</strong></li>
+        </ul>
+    </div>
+    
+    <h2>5. NVR/DVR Support</h2>
+    <p>The tool automatically detects Network Video Recorders (NVR) and Digital Video Recorders (DVR) and extracts all available channels:</p>
+    
+    <h3>5.1 Detection Methods</h3>
+    <ul>
+        <li><strong>ONVIF Multi-Profile:</strong> Detects multiple ONVIF profiles representing different channels</li>
+        <li><strong>HTTP API:</strong> Uses manufacturer-specific APIs (Hikvision, Dahua) to get channel information</li>
+        <li><strong>Pattern Matching:</strong> Tests common NVR/DVR RTSP URL patterns for multiple channels</li>
+    </ul>
+    
+    <h3>5.2 Supported NVR/DVR Brands</h3>
+    <ul>
+        <li><strong>Hikvision:</strong> DS-7xxx, DS-9xxx series NVRs</li>
+        <li><strong>Dahua:</strong> NVR4xxx, NVR5xxx series</li>
+        <li><strong>Generic ONVIF:</strong> Any NVR supporting ONVIF with multiple profiles</li>
+        <li><strong>Pattern-based:</strong> Most standard NVRs with common RTSP patterns</li>
+    </ul>
+    
+    <h3>5.3 Channel Extraction</h3>
+    <p>When an NVR/DVR is detected:</p>
+    <ul>
+        <li>Each channel appears as a separate camera in the results</li>
+        <li>Channel naming: "IP_Address_ch1", "IP_Address_ch2", etc.</li>
+        <li>Both main and sub streams are detected for each channel</li>
+        <li>Up to 32 channels supported per NVR/DVR</li>
+    </ul>
+    
+    <div class="note">
+        <strong>Note:</strong> NVR/DVR detection requires valid credentials and may take longer than single camera detection due to multiple channel testing.
+    </div>
+    
+    <h2>6. RTSP URL Patterns</h2>
+    <p>The tool includes built-in patterns for major manufacturers:</p>
+    
+    <table>
+        <tr>
+            <th>Manufacturer</th>
+            <th>Main Stream Pattern</th>
+            <th>Sub Stream Pattern</th>
+        </tr>
+        <tr>
+            <td>Hikvision</td>
+            <td>/Streaming/Channels/101</td>
+            <td>/Streaming/Channels/102</td>
+        </tr>
+        <tr>
+            <td>Dahua</td>
+            <td>/cam/realmonitor?channel=1&subtype=0</td>
+            <td>/cam/realmonitor?channel=1&subtype=1</td>
+        </tr>
+        <tr>
+            <td>TP-Link/Tapo</td>
+            <td>/stream1</td>
+            <td>/stream2</td>
+        </tr>
+        <tr>
+            <td>Axis</td>
+            <td>/axis-media/media.amp?videocodec=h264</td>
+            <td>/axis-media/media.amp?videocodec=h264&resolution=640x360</td>
+        </tr>
+        <tr>
+            <td>Foscam</td>
+            <td>/videoMain</td>
+            <td>/videoSub</td>
+        </tr>
+    </table>
+    
+    <h3>5.1 Custom RTSP Patterns</h3>
+    <div class="step">
+        <p>To add custom patterns, create a file named <code>rtsp-patterns.txt</code> in the application directory:</p>
+        <ul>
+            <li>One pattern per line</li>
+            <li>Format: <code>main_stream_path, sub_stream_path</code></li>
+            <li>Lines starting with <code>#</code> are comments</li>
+        </ul>
+        <p><strong>Example:</strong></p>
+        <code>
+            # Custom patterns<br>
+            /live/ch00_0, /live/ch00_1<br>
+            /stream/profile0, /stream/profile1
+        </code>
+    </div>
+    
+    <h2>6. Excel Export</h2>
+    <div class="step">
+        <p>Click "Export to Excel" to generate a detailed report containing:</p>
+        <ul>
+            <li>IP Address</li>
+            <li>Manufacturer, Model, Serial Number</li>
+            <li>Username and Password</li>
+            <li>Main Stream: URL, Resolution, Codec, Bitrate, FPS</li>
+            <li>Sub Stream: URL, Resolution, Codec, Bitrate, FPS</li>
+            <li>Error messages (if any)</li>
+        </ul>
+    </div>
+    
+    <div class="note">
+        <strong>Conditional Formatting:</strong> Sub-stream cells are highlighted in red if:
+        <ul>
+            <li>Codec is not H.264</li>
+            <li>Resolution is not between 360p and 480p</li>
+        </ul>
+    </div>
+    
+    <h2>7. Log Files</h2>
+    <p>Application logs are written to <code>cctv-discovery.log</code> in the application directory. This file contains:</p>
+    <ul>
+        <li>Discovery events</li>
+        <li>Connection attempts</li>
+        <li>Stream analysis results</li>
+        <li>Error messages and stack traces</li>
+    </ul>
+    
+    <h2>8. Troubleshooting</h2>
+    
+    <h3>8.1 No Cameras Found</h3>
+    <ul>
+        <li>Verify cameras are powered on and connected to the network</li>
+        <li>Check that you selected the correct network interface</li>
+        <li>Ensure firewall is not blocking UDP port 3702 (ONVIF discovery)</li>
+        <li>Try port scanning as a fallback method</li>
+    </ul>
+    
+    <h3>8.2 Authentication Failed</h3>
+    <ul>
+        <li>Verify username and password are correct</li>
+        <li>Check if camera requires password reset</li>
+        <li>Some cameras require ONVIF authentication to be enabled</li>
+    </ul>
+    
+    <h3>8.3 Stream Analysis Failed</h3>
+    <ul>
+        <li>Ensure RTSP ports (554, 8554) are not blocked by firewall</li>
+        <li>Verify camera supports RTSP streaming</li>
+        <li>Check if camera has reached maximum connection limit</li>
+        <li>Add custom RTSP patterns if using uncommon camera models</li>
+    </ul>
+    
+    <h3>8.4 Application Crashes or Freezes</h3>
+    <ul>
+        <li>Check <code>cctv-discovery.log</code> for error details</li>
+        <li>Ensure sufficient system memory is available</li>
+        <li>Reduce the IP range if scanning large networks</li>
+        <li>Close other applications to free up resources</li>
+    </ul>
+    
+    <h2>9. Performance Optimization</h2>
+    
+    <h3>9.1 Thread Pool Configuration</h3>
+    <p>The application automatically uses one thread per CPU core for RTSP URL guessing. On systems with more cores, processing will be faster.</p>
+    
+    <h3>9.2 Network Considerations</h3>
+    <ul>
+        <li>Port scanning is faster on smaller IP ranges</li>
+        <li>ONVIF discovery is nearly instantaneous regardless of network size</li>
+        <li>Stream analysis time depends on network latency and camera response time</li>
+    </ul>
+    
+    <h2>10. Best Practices</h2>
+    <ul>
+        <li>Always perform ONVIF discovery first before port scanning</li>
+        <li>Use bulk credential assignment for cameras with the same login</li>
+        <li>Keep <code>rtsp-patterns.txt</code> updated with your camera models</li>
+        <li>Export results regularly to track camera inventory</li>
+        <li>Review log files when troubleshooting connection issues</li>
+        <li>Ensure cameras have unique IP addresses (no conflicts)</li>
+    </ul>
+    
+    <h2>11. Security Considerations</h2>
+    <div class="warning">
+        <strong>Warning:</strong>
+        <ul>
+            <li>Exported Excel files contain plaintext passwords</li>
+            <li>Store exported files securely</li>
+            <li>Do not share credentials over unsecured channels</li>
+            <li>Change default camera passwords immediately</li>
+            <li>Use strong, unique passwords for each camera</li>
+        </ul>
+    </div>
+    
+    <h2>12. Technical Details</h2>
+    
+    <h3>12.1 Discovery Methods</h3>
+    <ul>
+        <li><strong>ONVIF WS-Discovery:</strong> Broadcasts UDP multicast to 239.255.255.250:3702</li>
+        <li><strong>Port Scanning:</strong> TCP connection attempts to ports 554, 8554, 80, 8080</li>
+    </ul>
+    
+    <h3>12.2 Stream Analysis</h3>
+    <ul>
+        <li>Uses FFmpeg/JavaCV for stream probing</li>
+        <li>Connection timeout: 1 second per URL test</li>
+        <li>Tests all patterns sequentially per device</li>
+        <li>Stops immediately on successful main+sub stream discovery</li>
+        <li>No hard timeout per device - tries all patterns</li>
+    </ul>
+    
+    <h3>12.3 Supported Stream Properties</h3>
+    <ul>
+        <li>Resolution (width x height)</li>
+        <li>Video codec (H.264, H.265, MJPEG, etc.)</li>
+        <li>Bitrate (kbps)</li>
+        <li>Frame rate (FPS)</li>
+    </ul>
+    
+    <h2>13. Support</h2>
+    <p>For additional support or to report issues:</p>
+    <ul>
+        <li>Check the log file: <code>cctv-discovery.log</code></li>
+        <li>Review the README.md file in the application directory</li>
+        <li>Consult your camera manufacturer's documentation</li>
+    </ul>
+    
+    <hr>
+    <p style="text-align: center; color: #7f8c8d; margin-top: 40px;">
+        <small>CCTV Discovery Tool - Version 1.0</small>
+    </p>
+</body>
+</html>
