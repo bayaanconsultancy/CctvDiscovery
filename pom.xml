@@ -13,7 +13,8 @@
     <description>IP camera discovery and analysis tool</description>
     <inceptionYear>2025</inceptionYear>
     <organization>
-        <name>CCTV Discovery</name>
+        <name>Consultancy Services</name>
+        <url>https://consultancyservices.com/</url>
     </organization>
 
     <properties>
@@ -170,7 +171,7 @@
                                 <argument>-Command</argument>
                                 <argument>
                                     if (-not (Test-Path "${project.build.directory}\cert.pfx")) {
-                                        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=TCSiON, OU=iON, O=Tata Consultancy Services Ltd., L=Kolkata, S=West Bengal, C=IN' -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation Cert:\CurrentUser\My;
+                                        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=CSON, OU=ON, O=Consultancy Services Ltd., L=Kolkata, S=West Bengal, C=IN' -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation Cert:\CurrentUser\My;
                                         $pwd = ConvertTo-SecureString -String '${cert.password}' -Force -AsPlainText;
                                         Export-PfxCertificate -Cert $cert -FilePath "${project.build.directory}\cert.pfx" -Password $pwd -ChainOption BuildChain
                                     }
