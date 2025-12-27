@@ -13,6 +13,17 @@ public class WizardFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
+        // Set window icon
+        try {
+            java.net.URL iconURL = getClass().getResource("/icon.png");
+            if (iconURL != null) {
+                ImageIcon icon = new ImageIcon(iconURL);
+                setIconImage(icon.getImage());
+            }
+        } catch (Exception e) {
+            System.err.println("Could not load window icon: " + e.getMessage());
+        }
+        
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         

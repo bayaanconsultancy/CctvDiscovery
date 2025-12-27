@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTV Discovery API - Maven Integration Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #7f8c8d;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin: 5px 0;
+        }
+        .toc a {
+            text-decoration: none;
+            color: #3498db;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 CCTV Discovery API - Maven Integration Guide</h1>
+        
+        <div class="toc">
+            <h3>📋 Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#basic-usage">Basic Usage</a></li>
+                <li><a href="#advanced-features">Advanced Features</a></li>
+                <li><a href="#examples">Complete Examples</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+        </div>
+
+        <h2 id="overview">📖 Overview</h2>
+        <p>The CCTV Discovery API provides programmatic access to IP camera discovery functionality with ONVIF support, authentication, and stream analysis capabilities.</p>
+
+        <div class="info">
+            <strong>Key Features:</strong>
+            <ul>
+                <li>ONVIF WS-Discovery for automatic camera detection</li>
+                <li>Multiple authentication methods (Digest, Plain Text, Anonymous)</li>
+                <li>RTSP stream URL discovery and analysis</li>
+                <li>NVR/DVR multi-channel detection</li>
+                <li>Async/sync operation modes</li>
+                <li>JSON output format</li>
+            </ul>
+        </div>
+
+        <h2 id="installation">⚙️ Installation</h2>
+
+        <h3>Step 1: Install JAR to Local Repository</h3>
+        <p>Since the API JAR is not published to Maven Central, install it to your local repository:</p>
+        <pre><code>mvn install:install-file \
+  -Dfile=cctv-discovery-1.0.0-api.jar \
+  -DgroupId=com.cctv \
+  -DartifactId=cctv-discovery-api \
+  -Dversion=1.0.0 \
+  -Dpackaging=jar</code></pre>
+
+        <h3>Step 2: Add Dependency to pom.xml</h3>
+        <pre><code>&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;com.cctv&lt;/groupId&gt;
+        &lt;artifactId&gt;cctv-discovery-api&lt;/artifactId&gt;
+        &lt;version&gt;1.0.0&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+
+        <div class="warning">
+            <strong>⚠️ Platform Compatibility:</strong> Stream analysis requires x86_64 architecture. On ARM64 systems, disable stream analysis to avoid FFmpeg compatibility issues.
+        </div>
+
+        <h2 id="basic-usage">🚀 Basic Usage</h2>
+
+        <h3>Simple Discovery Example</h3>
+        <pre><code>import com.cctv.api.*;
+
+public class BasicDiscovery {
+    public static void main(String[] args) {
+        try {
+            // Basic discovery without stream analysis
+            DiscoveryResult result = CctvDiscovery.builder()
+                .ipRange("192.168.1.1-192.168.1.50")
+                .credentials("admin", "admin")
+                .enableOnvif(true)
+                .enablePortScan(false)
+                .enableRtspGuessing(false)
+                .build()
+                .discover();
+            
+            System.out.println("Found " + result.getSuccessfulDevices() + " cameras");
+            System.out.println("JSON: " + result.toJson());
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+
+        <h3>Async Discovery with Progress</h3>
+        <pre><code>import java.util.concurrent.CompletableFuture;
+
+public class AsyncDiscovery {
+    public static void main(String[] args) {
+        CompletableFuture&lt;DiscoveryResult&gt; future = CctvDiscovery.builder()
+            .ipRange("192.168.0.100-192.168.0.120")
+            .credentials("admin", "password123")
+            .enableOnvif(true)
+            .timeout(30)
+            .onProgress(progress -&gt; 
+                System.out.printf("[%s] %d/%d - %s%n", 
+                    progress.getPhase(), 
+                    progress.getCurrent(), 
+                    progress.getTotal(), 
+                    progress.getMessage()))
+            .build()
+            .discoverAsync();
+        
+        future.thenAccept(result -&gt; {
+            System.out.println("Discovery completed!");
+            result.getCameras().forEach(camera -&gt; 
+                System.out.println("Camera: " + camera.getIpAddress() + 
+                                 " (" + camera.getManufacturer() + ")"));
+        });
+    }
+}</code></pre>
+
+        <h2 id="advanced-features">🔧 Advanced Features</h2>
+
+        <h3>Multiple Credentials</h3>
+        <pre><code>DiscoveryResult result = CctvDiscovery.builder()
+    .ipRange("192.168.1.1-50")
+    .credentials("admin", "admin")
+    .credentials("admin", "12345")
+    .credentials("root", "password")
+    .enableOnvif(true)
+    .build()
+    .discover();</code></pre>
+
+        <h3>Stream Analysis (x86_64 only)</h3>
+        <pre><code>DiscoveryResult result = CctvDiscovery.builder()
+    .ipRange("192.168.1.100")
+    .credentials("admin", "admin")
+    .enableOnvif(true)
+    .enableRtspGuessing(true)  // Enable FFmpeg analysis
+    .timeout(60)  // Longer timeout for stream analysis
+    .build()
+    .discover();
+
+// Access stream properties
+result.getCameras().forEach(camera -&gt; {
+    if (camera.getMainStream() != null) {
+        System.out.println("Resolution: " + camera.getMainStream().getResolution());
+        System.out.println("Codec: " + camera.getMainStream().getCodec());
+        System.out.println("Bitrate: " + camera.getMainStream().getBitrate());
+        System.out.println("FPS: " + camera.getMainStream().getFps());
+    }
+});</code></pre>
+
+        <h3>Configuration Options</h3>
+        <table>
+            <tr>
+                <th>Method</th>
+                <th>Description</th>
+                <th>Default</th>
+            </tr>
+            <tr>
+                <td><code>ipRange(String)</code></td>
+                <td>IP range to scan (e.g., "192.168.1.1-50")</td>
+                <td>Required</td>
+            </tr>
+            <tr>
+                <td><code>credentials(String, String)</code></td>
+                <td>Add username/password pair</td>
+                <td>Required</td>
+            </tr>
+            <tr>
+                <td><code>enableOnvif(boolean)</code></td>
+                <td>Enable ONVIF WS-Discovery</td>
+                <td>true</td>
+            </tr>
+            <tr>
+                <td><code>enablePortScan(boolean)</code></td>
+                <td>Enable port scanning (554, 8554)</td>
+                <td>true</td>
+            </tr>
+            <tr>
+                <td><code>enableRtspGuessing(boolean)</code></td>
+                <td>Enable RTSP pattern testing</td>
+                <td>true</td>
+            </tr>
+            <tr>
+                <td><code>enableNvrDetection(boolean)</code></td>
+                <td>Enable NVR multi-channel detection</td>
+                <td>true</td>
+            </tr>
+            <tr>
+                <td><code>threadCount(int)</code></td>
+                <td>Number of worker threads</td>
+                <td>CPU cores</td>
+            </tr>
+            <tr>
+                <td><code>timeout(int)</code></td>
+                <td>Timeout in seconds</td>
+                <td>30</td>
+            </tr>
+        </table>
+
+        <h2 id="examples">💡 Complete Examples</h2>
+
+        <h3>Enterprise Discovery Service</h3>
+        <pre><code>import com.cctv.api.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+public class CameraDiscoveryService {
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    
+    public CompletableFuture&lt;List&lt;CameraResult&gt;&gt; discoverCamerasInSubnets(
+            List&lt;String&gt; subnets, 
+            List&lt;Credential&gt; credentials) {
+        
+        List&lt;CompletableFuture&lt;DiscoveryResult&gt;&gt; futures = new ArrayList&lt;&gt;();
+        
+        for (String subnet : subnets) {
+            CompletableFuture&lt;DiscoveryResult&gt; future = CompletableFuture.supplyAsync(() -&gt; {
+                CctvDiscovery.Builder builder = CctvDiscovery.builder()
+                    .ipRange(subnet)
+                    .enableOnvif(true)
+                    .enablePortScan(true)
+                    .timeout(45);
+                
+                // Add all credentials
+                for (Credential cred : credentials) {
+                    builder.credentials(cred.getUsername(), cred.getPassword());
+                }
+                
+                return builder.build().discover();
+            }, executor);
+            
+            futures.add(future);
+        }
+        
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+            .thenApply(v -&gt; {
+                List&lt;CameraResult&gt; allCameras = new ArrayList&lt;&gt;();
+                futures.forEach(future -&gt; {
+                    try {
+                        allCameras.addAll(future.get().getCameras());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+                return allCameras;
+            });
+    }
+    
+    public void shutdown() {
+        executor.shutdown();
+    }
+}</code></pre>
+
+        <h3>Spring Boot Integration</h3>
+        <pre><code>import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Async;
+
+@Service
+public class CameraDiscoveryController {
+    
+    @Async
+    public CompletableFuture&lt;DiscoveryResult&gt; discoverCameras(
+            String ipRange, 
+            String username, 
+            String password) {
+        
+        return CctvDiscovery.builder()
+            .ipRange(ipRange)
+            .credentials(username, password)
+            .enableOnvif(true)
+            .enablePortScan(false)  // Faster for web apps
+            .timeout(30)
+            .build()
+            .discoverAsync();
+    }
+}</code></pre>
+
+        <h3>JSON Processing Example</h3>
+        <pre><code>import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+
+public class JsonProcessor {
+    public void processDiscoveryResults(DiscoveryResult result) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(result.toJson());
+            
+            // Process cameras
+            JsonNode cameras = json.get("cameras");
+            for (JsonNode camera : cameras) {
+                String ip = camera.get("ipAddress").asText();
+                String manufacturer = camera.get("manufacturer").asText();
+                String rtspUrl = camera.get("mainStream").get("rtspUrl").asText();
+                
+                System.out.printf("Camera %s (%s): %s%n", ip, manufacturer, rtspUrl);
+            }
+            
+            // Process errors
+            JsonNode errors = json.get("errors");
+            for (JsonNode error : errors) {
+                String ip = error.get("ipAddress").asText();
+                String message = error.get("error").asText();
+                System.err.printf("Error for %s: %s%n", ip, message);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+
+        <h2 id="troubleshooting">🔧 Troubleshooting</h2>
+
+        <h3>Common Issues</h3>
+
+        <div class="warning">
+            <strong>NoClassDefFoundError: FFmpeg</strong><br>
+            Stream analysis requires x86_64 architecture. Disable with <code>enableRtspGuessing(false)</code> on ARM64 systems.
+        </div>
+
+        <div class="warning">
+            <strong>No cameras found</strong><br>
+            <ul>
+                <li>Verify cameras are powered and network-connected</li>
+                <li>Check firewall settings (UDP 3702, TCP 554/8554)</li>
+                <li>Try different credential combinations</li>
+                <li>Enable port scanning as fallback</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <strong>Authentication failures</strong><br>
+            <ul>
+                <li>Verify username/password combinations</li>
+                <li>Try common defaults: admin/admin, admin/12345</li>
+                <li>Check if ONVIF is enabled on cameras</li>
+                <li>Some cameras require specific authentication methods</li>
+            </ul>
+        </div>
+
+        <h3>Performance Optimization</h3>
+        <pre><code>// Fast discovery for large networks
+DiscoveryResult result = CctvDiscovery.builder()
+    .ipRange("192.168.1.1-254")
+    .credentials("admin", "admin")
+    .enableOnvif(true)
+    .enablePortScan(false)      // Skip port scanning
+    .enableRtspGuessing(false)  // Skip stream analysis
+    .threadCount(8)             // Increase threads
+    .timeout(15)                // Reduce timeout
+    .build()
+    .discover();</code></pre>
+
+        <h3>Debug Logging</h3>
+        <p>Add to your <code>logback.xml</code> or <code>log4j2.xml</code>:</p>
+        <pre><code>&lt;logger name="CctvDiscovery" level="DEBUG"/&gt;</code></pre>
+
+        <div class="success">
+            <strong>✅ Best Practices:</strong>
+            <ul>
+                <li>Use async methods for web applications</li>
+                <li>Implement proper timeout handling</li>
+                <li>Cache discovery results when appropriate</li>
+                <li>Handle authentication failures gracefully</li>
+                <li>Monitor thread pool usage in production</li>
+            </ul>
+        </div>
+
+        <hr style="margin: 40px 0;">
+        <p style="text-align: center; color: #7f8c8d;">
+            <strong>CCTV Discovery API v1.0.0</strong><br>
+            Professional IP Camera Discovery and Analysis Solution
+        </p>
+    </div>
+</body>
+</html>

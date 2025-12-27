@@ -157,6 +157,7 @@ public class DiscoveryEngine {
         }
         
         result.setDiscoveryMethod(camera.getOnvifServiceUrl() != null ? "ONVIF" : "Port Scan");
+        result.setAuthenticationMethod(camera.getAuthenticationMethod());
         result.setNvr(camera.getIpAddress().contains("_ch"));
         
         return result;

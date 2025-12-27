@@ -26,6 +26,7 @@ public class OnvifClient {
                     fetchDeviceInformation(camera, camera.getUsername(), camera.getPassword(), authMethod);
                 }
                 Logger.info("=== Authentication SUCCESS for " + camera.getIpAddress() + " using " + authMethod + " ===");
+                camera.setAuthenticationMethod(authMethod);
                 return true;
             } catch (Exception e) {
                 Logger.info(authMethod + " authentication failed: " + e.getMessage());

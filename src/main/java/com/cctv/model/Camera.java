@@ -18,6 +18,7 @@ public class Camera {
     private String serialNumber;
     private String firmwareVersion;
     private volatile long timeDifferenceMs;
+    private String authenticationMethod;
     private List<Integer> openRtspPorts = new ArrayList<>();
     private final Object lock = new Object();
 
@@ -78,6 +79,9 @@ public class Camera {
 
     public long getTimeDifferenceMs() { return timeDifferenceMs; }
     public void setTimeDifferenceMs(long timeDifferenceMs) { this.timeDifferenceMs = timeDifferenceMs; }
+
+    public String getAuthenticationMethod() { return authenticationMethod; }
+    public void setAuthenticationMethod(String authenticationMethod) { this.authenticationMethod = authenticationMethod; }
 
     public List<Integer> getOpenRtspPorts() { return openRtspPorts; }
     public void setOpenRtspPorts(List<Integer> openRtspPorts) { this.openRtspPorts = openRtspPorts; }
