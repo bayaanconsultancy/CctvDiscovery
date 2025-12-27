@@ -13,18 +13,10 @@ public class PortScanner {
     private static final int THREAD_POOL_SIZE = 50;
 
     public static List<Camera> scan(List<String> ipAddresses) {
-        return scan(ipAddresses, null);
-    }
-    
-    public static List<Camera> scan(List<String> ipAddresses, com.cctv.ui.ProgressPanel progressPanel) {
         Logger.info("Starting port scan for " + ipAddresses.size() + " IPs");
         Set<Camera> cameras = Collections.synchronizedSet(new HashSet<>());
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         final java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger(0);
-        
-        if (progressPanel != null) {
-            progressPanel.setProgress(0, ipAddresses.size());
-        }
         
         for (String ip : ipAddresses) {
             executor.submit(() -> {
@@ -49,10 +41,7 @@ public class PortScanner {
                         cameras.add(camera);
                     }
                 } finally {
-                    if (progressPanel != null) {
-                        int current = completed.incrementAndGet();
-                        progressPanel.setProgress(current, ipAddresses.size());
-                    }
+                    completed.incrementAndGet();
                 }
             });
         }

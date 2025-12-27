@@ -109,7 +109,7 @@ public class DiscoveryResultsPanel extends JPanel {
         new SwingWorker<List<Camera>, Void>() {
             @Override
             protected List<Camera> doInBackground() {
-                List<Camera> scanned = PortScanner.scan(ipRange, progressPanel);
+                List<Camera> scanned = PortScanner.scan(ipRange);
                 for (Camera cam : scanned) {
                     if (!existingCameras.contains(cam)) {
                         existingCameras.add(cam);

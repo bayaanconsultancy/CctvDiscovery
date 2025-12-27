@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+    <id>api</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.outputDirectory}</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>com/cctv/api/**</include>
+                <include>com/cctv/discovery/**</include>
+                <include>com/cctv/model/**</include>
+                <include>com/cctv/network/**</include>
+                <include>com/cctv/onvif/**</include>
+                <include>com/cctv/probe/**</include>
+                <include>com/cctv/util/**</include>
+            </includes>
+            <excludes>
+                <exclude>com/cctv/ui/**</exclude>
+                <exclude>com/cctv/export/**</exclude>
+                <exclude>com/cctv/Main.class</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+    
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/</outputDirectory>
+            <useProjectArtifact>false</useProjectArtifact>
+            <unpack>true</unpack>
+            <scope>runtime</scope>
+            <excludes>
+                <exclude>org.apache.poi:*</exclude>
+            </excludes>
+            <unpackOptions>
+                <excludes>
+                    <exclude>META-INF/maven/plugin.xml</exclude>
+                    <exclude>META-INF/maven/**</exclude>
+                </excludes>
+            </unpackOptions>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>/</outputDirectory>
+            <useProjectArtifact>false</useProjectArtifact>
+            <unpack>false</unpack>
+            <includes>
+                <include>org.bytedeco:ffmpeg:*:windows-x86_64</include>
+            </includes>
+        </dependencySet>
+    </dependencySets>
+</assembly>

@@ -43,7 +43,7 @@ public class CredentialPanel extends JPanel {
             }
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 0;
+                return column == 0 || column == 2 || column == 3;
             }
         };
         
@@ -206,7 +206,7 @@ public class CredentialPanel extends JPanel {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-                DeviceProber.probeAll(cameras, progressPanel);
+                DeviceProber.probeAll(cameras);
                 return null;
             }
             

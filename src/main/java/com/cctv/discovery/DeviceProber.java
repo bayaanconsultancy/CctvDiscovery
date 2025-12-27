@@ -13,18 +13,10 @@ public class DeviceProber {
     private static final int THREAD_POOL_SIZE = 10;
 
     public static void probeAll(List<Camera> cameras) {
-        probeAll(cameras, null);
-    }
-    
-    public static void probeAll(List<Camera> cameras, com.cctv.ui.ProgressPanel progressPanel) {
         Logger.info("Starting device probing for " + cameras.size() + " cameras");
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         List<Future<?>> futures = new ArrayList<>();
         final java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger(0);
-        
-        if (progressPanel != null) {
-            progressPanel.setProgress(0, cameras.size());
-        }
         
         for (Camera camera : cameras) {
             Future<?> future = executor.submit(() -> {
@@ -86,10 +78,7 @@ public class DeviceProber {
                     Logger.error("Failed to probe camera " + camera.getIpAddress(), e);
                     camera.setErrorMessage(e.getMessage());
                 } finally {
-                    if (progressPanel != null) {
-                        int current = completed.incrementAndGet();
-                        progressPanel.setProgress(current, cameras.size());
-                    }
+                    completed.incrementAndGet();
                 }
             });
             futures.add(future);

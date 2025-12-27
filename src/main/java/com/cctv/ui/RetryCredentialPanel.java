@@ -24,19 +24,24 @@ public class RetryCredentialPanel extends JPanel {
         title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(title, BorderLayout.NORTH);
         
-        String[] columns = {"IP Address", "Username", "Password"};
+        String[] columns = {"Select", "IP Address", "Username", "Password"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
+            public Class<?> getColumnClass(int column) {
+                return column == 0 ? Boolean.class : String.class;
+            }
+            @Override
             public boolean isCellEditable(int row, int column) {
-                return column > 0;
+                return column == 0 || column == 2 || column == 3;
             }
         };
         
         for (Camera camera : failedCameras) {
-            tableModel.addRow(new Object[]{camera.getIpAddress(), "admin", ""});
+            tableModel.addRow(new Object[]{false, camera.getIpAddress(), "admin", ""});
         }
         
         table = new JTable(tableModel);
+        table.getColumnModel().getColumn(0).setMaxWidth(50);
         table.getTableHeader().setReorderingAllowed(false);
         table.setRowHeight(25);
         table.setShowGrid(true);
@@ -45,6 +50,18 @@ public class RetryCredentialPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
         
         JPanel buttonPanel = new JPanel(new FlowLayout());
+        
+        JButton selectAllButton = createStyledButton("Select All", new Color(74, 144, 226), new Color(53, 122, 189));
+        selectAllButton.addActionListener(e -> {
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                tableModel.setValueAt(true, i, 0);
+            }
+        });
+        buttonPanel.add(selectAllButton);
+        
+        JButton setCredentialsButton = createStyledButton("Set Credentials", new Color(74, 144, 226), new Color(53, 122, 189));
+        setCredentialsButton.addActionListener(e -> showCredentialDialog());
+        buttonPanel.add(setCredentialsButton);
         
         JButton skipButton = createStyledButton("Skip", new Color(220, 53, 69), new Color(201, 48, 44));
         skipButton.addActionListener(e -> {
@@ -62,7 +79,7 @@ public class RetryCredentialPanel extends JPanel {
             
             boolean allPasswordsSet = true;
             for (int i = 0; i < tableModel.getRowCount(); i++) {
-                String password = (String) tableModel.getValueAt(i, 2);
+                String password = (String) tableModel.getValueAt(i, 3);
                 if (password == null || password.trim().isEmpty()) {
                     allPasswordsSet = false;
                     break;
@@ -88,8 +105,8 @@ public class RetryCredentialPanel extends JPanel {
                 @Override
                 protected Void doInBackground() {
                     for (int i = 0; i < tableModel.getRowCount(); i++) {
-                        String username = (String) tableModel.getValueAt(i, 1);
-                        String password = (String) tableModel.getValueAt(i, 2);
+                        String username = (String) tableModel.getValueAt(i, 2);
+                        String password = (String) tableModel.getValueAt(i, 3);
                         Camera cam = failedCameras.get(i);
                         
                         Logger.info("=== Retry: Setting credentials for " + cam.getIpAddress() + " ===");
@@ -103,7 +120,7 @@ public class RetryCredentialPanel extends JPanel {
                         cam.setSubStream(null);
                     }
                     
-                    DeviceProber.probeAll(failedCameras, progressPanel);
+                    DeviceProber.probeAll(failedCameras);
                     
                     for (Camera cam : failedCameras) {
                         if (cam.getMainStream() == null && cam.getErrorMessage() != null && 
@@ -171,5 +188,35 @@ public class RetryCredentialPanel extends JPanel {
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         return button;
+    }
+    
+    private void showCredentialDialog() {
+        JTextField userField = new JTextField("admin", 15);
+        JPasswordField passField = new JPasswordField(15);
+        JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
+        panel.add(new JLabel("Username:"));
+        panel.add(userField);
+        panel.add(new JLabel("Password:"));
+        panel.add(passField);
+        
+        SwingUtilities.invokeLater(() -> passField.requestFocusInWindow());
+        
+        int result = JOptionPane.showConfirmDialog(this, panel, "Enter Credentials", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            String username = userField.getText().trim();
+            String password = new String(passField.getPassword());
+            
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Username cannot be empty", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if ((Boolean) tableModel.getValueAt(i, 0)) {
+                    tableModel.setValueAt(username, i, 2);
+                    tableModel.setValueAt(password, i, 3);
+                }
+            }
+        }
     }
 }
