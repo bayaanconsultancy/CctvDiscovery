@@ -31,17 +31,36 @@ public class DeviceProber {
                         if (camera.getOnvifServiceUrl() != null) {
                             Logger.info("Attempting ONVIF authentication...");
                             if (OnvifClient.authenticate(camera)) {
-                                Logger.info("ONVIF auth succeeded, fetching streams...");
-                                OnvifClient.fetchStreamUrls(camera);
+                                Logger.info("ONVIF auth succeeded, fetching multi-channel streams...");
+                                List<Camera> channelCameras = OnvifClient.fetchStreamUrlsMultiChannel(camera);
                                 
-                                if (camera.getMainStream() != null) {
-                                    Logger.info("Probing main stream for " + camera.getIpAddress());
-                                    StreamProbe.probe(camera.getMainStream());
+                                if (channelCameras.size() > 1) {
+                                    Logger.info("Found " + channelCameras.size() + " channels");
+                                    // Replace single camera with multiple channels
+                                    synchronized(cameras) {
+                                        int index = cameras.indexOf(camera);
+                                        if (index >= 0) {
+                                            cameras.remove(index);
+                                            cameras.addAll(index, channelCameras);
+                                        }
+                                    }
                                     onvifSuccess = true;
-                                }
-                                if (camera.getSubStream() != null) {
-                                    Logger.info("Probing sub stream for " + camera.getIpAddress());
-                                    StreamProbe.probe(camera.getSubStream());
+                                } else if (channelCameras.size() == 1) {
+                                    // Single channel, probe streams
+                                    Camera singleCamera = channelCameras.get(0);
+                                    if (singleCamera.getMainStream() != null) {
+                                        Logger.info("Probing main stream for " + singleCamera.getIpAddress());
+                                        StreamProbe.probe(singleCamera.getMainStream());
+                                        onvifSuccess = true;
+                                    }
+                                    if (singleCamera.getSubStream() != null) {
+                                        Logger.info("Probing sub stream for " + singleCamera.getIpAddress());
+                                        StreamProbe.probe(singleCamera.getSubStream());
+                                    }
+                                    // Update original camera with single channel data
+                                    camera.setCameraName(singleCamera.getCameraName());
+                                    camera.setMainStream(singleCamera.getMainStream());
+                                    camera.setSubStream(singleCamera.getSubStream());
                                 }
                             } else {
                                 Logger.info("ONVIF auth failed");

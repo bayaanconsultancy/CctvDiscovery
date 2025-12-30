@@ -198,58 +198,92 @@ public class OnvifClient {
         }
     }
 
-    public static void fetchStreamUrls(Camera camera) {
+    public static java.util.List<Camera> fetchStreamUrlsMultiChannel(Camera baseCamera) {
+        java.util.List<Camera> cameras = new java.util.ArrayList<>();
+        
         try {
             String profilesBody = SoapHelper.createSoapEnvelope(
                 "<GetProfiles xmlns=\"http://www.onvif.org/ver10/media/wsdl\"/>",
-                camera.getUsername(), camera.getPassword());
+                baseCamera.getUsername(), baseCamera.getPassword());
             
-            String mediaUrl = camera.getOnvifServiceUrl().replace("/onvif/device_service", "/onvif/media_service");
+            String mediaUrl = baseCamera.getOnvifServiceUrl().replace("/onvif/device_service", "/onvif/media_service");
             if (!mediaUrl.contains("/onvif/")) {
-                mediaUrl = "http://" + camera.getIpAddress() + "/onvif/media_service";
+                mediaUrl = "http://" + baseCamera.getIpAddress() + "/onvif/media_service";
             }
             
-            Logger.info("=== GetProfiles Request for " + camera.getIpAddress() + " ===");
-            Logger.info("URL: " + mediaUrl);
-            Logger.info("Request Body: " + profilesBody);
-            
+            Logger.info("=== GetProfiles Request for " + baseCamera.getIpAddress() + " ===");
             String response = SoapHelper.sendSoapRequest(mediaUrl, "", profilesBody, null, null);
-            Logger.info("=== GetProfiles Response for " + camera.getIpAddress() + " ===");
+            Logger.info("=== GetProfiles Response for " + baseCamera.getIpAddress() + " ===");
             Logger.info(response);
             
+            // Extract all profiles
             String[] profiles = response.split("<trt:Profiles");
             if (profiles.length == 1) {
                 profiles = response.split("<Profiles");
             }
+            
             if (profiles.length > 1) {
-                String mainProfile = extractProfileToken(profiles[1]);
-                if (mainProfile != null) {
-                    String mainUrl = getStreamUri(mediaUrl, mainProfile, camera.getUsername(), camera.getPassword());
-                    if (mainUrl != null) {
-                        StreamInfo main = new StreamInfo();
-                        main.setRtspUrl(mainUrl);
-                        camera.setMainStream(main);
-                    }
-                }
-                
-                if (profiles.length > 2) {
-                    String subProfile = extractProfileToken(profiles[2]);
-                    if (subProfile != null) {
-                        String subUrl = getStreamUri(mediaUrl, subProfile, camera.getUsername(), camera.getPassword());
+                // Process profiles in pairs (main/sub)
+                for (int i = 1; i < profiles.length; i += 2) {
+                    String mainProfileToken = extractProfileToken(profiles[i]);
+                    String mainProfileName = extractProfileName(profiles[i]);
+                    
+                    if (mainProfileToken != null) {
+                        // Create new camera for this channel
+                        Camera channelCamera = new Camera(baseCamera);
+                        
+                        String mainUrl = getStreamUri(mediaUrl, mainProfileToken, baseCamera.getUsername(), baseCamera.getPassword());
+                        
+                        // Look for sub stream (next profile)
+                        String subUrl = null;
+                        if (i + 1 < profiles.length) {
+                            String subProfileToken = extractProfileToken(profiles[i + 1]);
+                            if (subProfileToken != null) {
+                                subUrl = getStreamUri(mediaUrl, subProfileToken, baseCamera.getUsername(), baseCamera.getPassword());
+                            }
+                        }
+                        
+                        // Create camera name with channel info
+                        String channelName = extractChannelFromProfile(mainProfileName);
+                        if (channelName == null) channelName = mainProfileName;
+                        if (channelName == null) channelName = "Ch" + ((i + 1) / 2);
+                        
+                        String baseCameraName = baseCamera.getCameraName();
+                        if (baseCameraName == null) baseCameraName = baseCamera.getManufacturer();
+                        if (baseCameraName == null) baseCameraName = "Camera";
+                        
+                        channelCamera.setCameraName(baseCameraName + "_" + channelName);
+                        
+                        // Set streams
+                        if (mainUrl != null) {
+                            StreamInfo main = new StreamInfo();
+                            main.setRtspUrl(mainUrl);
+                            channelCamera.setMainStream(main);
+                        }
+                        
                         if (subUrl != null) {
                             StreamInfo sub = new StreamInfo();
                             sub.setRtspUrl(subUrl);
-                            camera.setSubStream(sub);
+                            channelCamera.setSubStream(sub);
                         }
+                        
+                        cameras.add(channelCamera);
                     }
                 }
             }
+            
+            // If no channels found, return original camera
+            if (cameras.isEmpty()) {
+                cameras.add(baseCamera);
+            }
+            
         } catch (Exception e) {
-            Logger.error("Failed to fetch stream URLs for " + camera.getIpAddress() + ": " + e.getMessage(), e);
-            String currentError = camera.getErrorMessage();
-            String newError = "Stream fetch failed: " + e.getMessage();
-            camera.setErrorMessage(currentError != null ? currentError + "; " + newError : newError);
+            Logger.error("Failed to fetch multi-channel streams for " + baseCamera.getIpAddress() + ": " + e.getMessage(), e);
+            baseCamera.setErrorMessage("Multi-channel fetch failed: " + e.getMessage());
+            cameras.add(baseCamera);
         }
+        
+        return cameras;
     }
 
     private static String extractPort(String url) {
@@ -270,6 +304,36 @@ public class OnvifClient {
         int tokenEnd = profileXml.indexOf("\"", tokenStart);
         if (tokenEnd == -1) return null;
         return profileXml.substring(tokenStart, tokenEnd);
+    }
+    
+    private static String extractProfileName(String profileXml) {
+        // Try to extract profile name from <tt:Name> or <Name>
+        String name = SoapHelper.extractValue(profileXml, "tt:Name");
+        if (name == null) name = SoapHelper.extractValue(profileXml, "Name");
+        return name;
+    }
+    
+    private static String extractChannelFromProfile(String profileName) {
+        if (profileName == null) return null;
+        
+        // Flexible patterns: PROFILE_1, PROFILE1, PROFILE-1, Channel_01, Channel01, Ch-1, etc.
+        String[] patterns = {
+            "PROFILE[_-]?([0-9]+)",
+            "Channel[_-]?([0-9]+)", 
+            "Ch[_-]?([0-9]+)",
+            "Stream[_-]?([0-9]+)",
+            "([0-9]+)"  // Just numbers as fallback
+        };
+        
+        for (String pattern : patterns) {
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern, java.util.regex.Pattern.CASE_INSENSITIVE);
+            java.util.regex.Matcher m = p.matcher(profileName);
+            if (m.find()) {
+                return "Ch" + m.group(1);
+            }
+        }
+        
+        return profileName; // Fallback to full profile name
     }
 
     private static String getStreamUri(String mediaUrl, String profileToken, String username, String password) {

@@ -25,6 +25,25 @@ public class Camera {
     public Camera(String ipAddress) {
         this.ipAddress = ipAddress;
     }
+    
+    // Copy constructor
+    public Camera(Camera other) {
+        this.ipAddress = other.ipAddress;
+        this.onvifServiceUrl = other.onvifServiceUrl;
+        this.username = other.username;
+        this.password = other.password;
+        this.authFailed = other.authFailed;
+        this.errorMessage = other.errorMessage;
+        this.manufacturer = other.manufacturer;
+        this.model = other.model;
+        this.cameraName = other.cameraName;
+        this.serialNumber = other.serialNumber;
+        this.firmwareVersion = other.firmwareVersion;
+        this.timeDifferenceMs = other.timeDifferenceMs;
+        this.authenticationMethod = other.authenticationMethod;
+        this.openRtspPorts = new ArrayList<>(other.openRtspPorts);
+        // Note: streams are not copied as they will be set individually per channel
+    }
 
     public String getIpAddress() { return ipAddress; }
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
