@@ -18,7 +18,7 @@ public class NvrDetector {
             return channels;
         }
         
-        Logger.info("=== NVR/DVR Detection for " + device.getIpAddress() + " ===");
+        Logger.info("NVR/DVR Detection for " + device.getIpAddress());
         
         // Try ONVIF multi-profile detection first
         int channelCount = detectOnvifChannels(device);
@@ -49,6 +49,11 @@ public class NvrDetector {
     
     private static int detectOnvifChannels(Camera device) {
         try {
+            // CRITICAL FIX: Check for null ONVIF service URL
+            if (device.getOnvifServiceUrl() == null) {
+                return 0;
+            }
+            
             String profilesBody = SoapHelper.createSoapEnvelope(
                 "<GetProfiles xmlns=\"http://www.onvif.org/ver10/media/wsdl\"/>",
                 device.getUsername(), device.getPassword());
@@ -112,6 +117,10 @@ public class NvrDetector {
         List<Camera> channels = new ArrayList<>();
         
         try {
+            if (device.getOnvifServiceUrl() == null) {
+                return channels;
+            }
+            
             String profilesBody = SoapHelper.createSoapEnvelope(
                 "<GetProfiles xmlns=\"http://www.onvif.org/ver10/media/wsdl\"/>",
                 device.getUsername(), device.getPassword());
@@ -138,6 +147,9 @@ public class NvrDetector {
                         StreamInfo stream = new StreamInfo();
                         stream.setRtspUrl(rtspUrl);
                         channel.setMainStream(stream);
+                        
+                        // IMPROVEMENT: Probe stream for metadata
+                        com.cctv.probe.StreamProbe.probe(stream);
                         
                         channels.add(channel);
                     }
@@ -208,11 +220,13 @@ public class NvrDetector {
         };
         
         for (String[] pattern : patterns) {
+            int consecutiveFailures = 0;
             for (int ch = 1; ch <= 16; ch++) { // Test up to 16 channels
                 String mainUrl = String.format("rtsp://%s:%s@%s:554" + pattern[0], 
                     device.getUsername(), device.getPassword(), device.getIpAddress(), ch);
                 
                 if (RtspUrlGuesser.testRtspUrl(mainUrl).success) {
+                    consecutiveFailures = 0; // Reset on success
                     Camera channel = new Camera(device.getIpAddress() + "_ch" + ch);
                     channel.setUsername(device.getUsername());
                     channel.setPassword(device.getPassword());
@@ -232,6 +246,13 @@ public class NvrDetector {
                     }
                     
                     channels.add(channel);
+                } else {
+                    consecutiveFailures++;
+                    // IMPROVEMENT: Stop after 3 consecutive failures
+                    if (consecutiveFailures >= 3) {
+                        Logger.info("Stopping channel detection after 3 consecutive failures");
+                        break;
+                    }
                 }
             }
             

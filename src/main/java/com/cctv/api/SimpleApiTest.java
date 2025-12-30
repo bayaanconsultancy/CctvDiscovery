@@ -107,7 +107,7 @@ public class SimpleApiTest {
     }
     
     private static void runDiscovery(Config config) throws Exception {
-        System.out.println("=== CCTV Discovery API Test (No Stream Analysis) ===");
+        System.out.println("CCTV Discovery API Test (No Stream Analysis)");
         System.out.println("Interfaces: " + config.interfaces);
         System.out.println("IP Ranges: " + config.ipRanges);
         System.out.println("Global Credentials: " + config.globalCredentials.size());
@@ -115,7 +115,7 @@ public class SimpleApiTest {
         System.out.println("IP Credentials: " + config.ipCredentials.size());
         
         if (config.testMode) {
-            System.out.println("\n=== TEST MODE - No actual discovery ===");
+            System.out.println("\nTEST MODE - No actual discovery");
             
             // Test interface resolution
             for (String iface : config.interfaces) {
@@ -132,6 +132,26 @@ public class SimpleApiTest {
             for (String ipRange : config.ipRanges) {
                 List<Credential> creds = getCredentialsForIpRange(config, ipRange);
                 System.out.println("IP Range " + ipRange + " with " + creds.size() + " credentials");
+            }
+            
+            // Test 4: Validation Error Handling
+            System.out.println("\n--- Test 4: Validation Error Handling ---");
+            try {
+                CctvDiscovery.builder()
+                    .threadCount(-1) // Invalid
+                    .build();
+                System.err.println("FAILED: Validation check missed invalid thread count");
+            } catch (IllegalArgumentException e) {
+                System.out.println("SUCCESS: Caught expected validation error: " + e.getMessage());
+            }
+
+            try {
+                CctvDiscovery.builder()
+                    .ipRange("") // Invalid
+                    .build();
+                System.err.println("FAILED: Validation check missed empty IP range");
+            } catch (IllegalStateException e) {
+                System.out.println("SUCCESS: Caught expected validation error: " + e.getMessage());
             }
             
             return;
@@ -281,11 +301,13 @@ public class SimpleApiTest {
             }
         }
         
+
+        
         return results;
     }
     
     private static void printSummary(List<DiscoveryResult> results) {
-        System.out.println("\n=== Summary ===");
+        System.out.println("\nSummary");
         int totalDevices = results.stream().mapToInt(DiscoveryResult::getTotalDevices).sum();
         int successful = results.stream().mapToInt(DiscoveryResult::getSuccessfulDevices).sum();
         int failed = results.stream().mapToInt(DiscoveryResult::getFailedDevices).sum();
@@ -296,7 +318,7 @@ public class SimpleApiTest {
         System.out.println("Failed: " + failed);
         System.out.println("Total duration: " + totalTime + "ms");
         
-        System.out.println("\n=== JSON Output ===");
+        System.out.println("\nJSON Output");
         for (DiscoveryResult result : results) {
             System.out.println(result.toJson());
         }

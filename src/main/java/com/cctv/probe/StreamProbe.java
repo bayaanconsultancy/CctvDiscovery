@@ -13,7 +13,7 @@ public class StreamProbe {
             return;
         }
         
-        Logger.info("=== Starting Stream Probe ===");
+        Logger.info("Starting Stream Probe");
         Logger.info("RTSP URL: " + stream.getRtspUrl());
         FFmpegFrameGrabber grabber = null;
         try {
@@ -47,11 +47,11 @@ public class StreamProbe {
             stream.setBitrate(bitrate / 1000);
             stream.setFps(fps > 0 && !Double.isNaN(fps) ? fps : 0);
             
-            Logger.info("=== Stream Probe Success ===");
+            Logger.info("Stream Probe Success");
             Logger.info("Resolution: " + stream.getResolution() + ", Codec: " + stream.getCodec() + ", FPS: " + stream.getFps() + ", Bitrate: " + stream.getBitrate());
         } catch (Exception e) {
             String errorMsg = e.getMessage();
-            Logger.error("=== Stream Probe Failed ===");
+            Logger.error("Stream Probe Failed");
             Logger.error("URL: " + stream.getRtspUrl());
             Logger.error("Error: " + errorMsg, e);
             

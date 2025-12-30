@@ -6,6 +6,9 @@ import com.cctv.network.IpRangeValidator;
 import com.cctv.network.NetworkInterface;
 import com.cctv.util.Logger;
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.List;
 
@@ -14,6 +17,13 @@ public class NetworkSelectionPanel extends JPanel {
     private JTextField startIpField;
     private JTextField endIpField;
     private JButton scanButton;
+    private JLabel validationLabel;
+    
+    private final Color ERROR_COLOR = new Color(220, 53, 69);
+    private final Color SUCCESS_COLOR = new Color(40, 167, 69);
+    private final Border DEFAULT_BORDER = UIManager.getBorder("TextField.border");
+    private final Border ERROR_BORDER = BorderFactory.createLineBorder(ERROR_COLOR, 1);
+    private final Border SUCCESS_BORDER = BorderFactory.createLineBorder(SUCCESS_COLOR, 1);
     
     public NetworkSelectionPanel(WizardFrame frame) {
         setLayout(new BorderLayout());
@@ -107,15 +117,36 @@ public class NetworkSelectionPanel extends JPanel {
         gbc.gridx = 1;
         centerPanel.add(endIpField, gbc);
         
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        validationLabel = new JLabel(" ");
+        validationLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        validationLabel.setForeground(ERROR_COLOR);
+        centerPanel.add(validationLabel, gbc);
+        
+        // Add listeners for real-time validation
+        DocumentListener validationListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { validateInputs(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { validateInputs(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { validateInputs(); }
+        };
+        
+        startIpField.getDocument().addDocumentListener(validationListener);
+        endIpField.getDocument().addDocumentListener(validationListener);
+        networkCombo.addActionListener(e -> validateInputs());
+        
         scanButton = createStyledButton("Start Scan", new Color(92, 184, 92), new Color(68, 157, 68));
         scanButton.setFont(new Font("Arial", Font.BOLD, 16));
         scanButton.setPreferredSize(new Dimension(180, 45));
         scanButton.addActionListener(e -> startScan(frame));
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(30, 10, 10, 10);
+        gbc.insets = new Insets(20, 10, 10, 10);
         centerPanel.add(scanButton, gbc);
         
         add(centerPanel, BorderLayout.CENTER);
@@ -180,6 +211,57 @@ public class NetworkSelectionPanel extends JPanel {
         }.execute();
     }
     
+    private void validateInputs() {
+        String startIp = startIpField.getText().trim();
+        String endIp = endIpField.getText().trim();
+        boolean manualEntry = !startIp.isEmpty() || !endIp.isEmpty();
+        
+        scanButton.setEnabled(true);
+        validationLabel.setText(" ");
+        startIpField.setBorder(DEFAULT_BORDER);
+        endIpField.setBorder(DEFAULT_BORDER);
+        
+        if (manualEntry) {
+            networkCombo.setEnabled(false);
+            boolean isValid = true;
+            
+            if (startIp.isEmpty()) {
+                startIpField.setBorder(DEFAULT_BORDER); // Not error, just empty
+                validationLabel.setText("Start IP is required");
+                isValid = false;
+            } else if (!IpRangeValidator.isValidIp(startIp)) {
+                startIpField.setBorder(ERROR_BORDER);
+                validationLabel.setText("Invalid Start IP format");
+                isValid = false;
+            } else {
+                startIpField.setBorder(SUCCESS_BORDER);
+            }
+            
+            if (endIp.isEmpty()) {
+                endIpField.setBorder(DEFAULT_BORDER);
+                if (isValid) validationLabel.setText("End IP is required"); // Only show if start is valid
+                isValid = false;
+            } else if (!IpRangeValidator.isValidIp(endIp)) {
+                endIpField.setBorder(ERROR_BORDER);
+                validationLabel.setText("Invalid End IP format");
+                isValid = false;
+            } else {
+                endIpField.setBorder(SUCCESS_BORDER);
+            }
+            
+            scanButton.setEnabled(isValid);
+        } else {
+            networkCombo.setEnabled(true);
+            // reset borders
+            startIpField.setBorder(DEFAULT_BORDER);
+            endIpField.setBorder(DEFAULT_BORDER);
+            
+            if (networkCombo.getSelectedItem() == null) {
+                scanButton.setEnabled(false);
+            }
+        }
+    }
+
     private JButton createStyledButton(String text, Color color1, Color color2) {
         JButton button = new JButton(text) {
             @Override

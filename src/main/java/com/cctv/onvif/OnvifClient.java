@@ -10,7 +10,7 @@ import java.util.TimeZone;
 public class OnvifClient {
     
     public static boolean authenticate(Camera camera) {
-        Logger.info("=== Authenticating " + camera.getIpAddress() + " with username: " + camera.getUsername() + " ===");
+        Logger.info("Authenticating " + camera.getIpAddress() + " with username: " + camera.getUsername());
         camera.setAuthFailed(false);
         camera.setErrorMessage(null);
         
@@ -25,7 +25,7 @@ public class OnvifClient {
                 } else {
                     fetchDeviceInformation(camera, camera.getUsername(), camera.getPassword(), authMethod);
                 }
-                Logger.info("=== Authentication SUCCESS for " + camera.getIpAddress() + " using " + authMethod + " ===");
+                Logger.info("Authentication SUCCESS for " + camera.getIpAddress() + " using " + authMethod);
                 camera.setAuthenticationMethod(authMethod);
                 return true;
             } catch (Exception e) {
@@ -42,7 +42,7 @@ public class OnvifClient {
             }
         }
         
-        Logger.error("=== Authentication FAILED for " + camera.getIpAddress() + " - all methods failed ===");
+        Logger.error("Authentication FAILED for " + camera.getIpAddress() + " - all methods failed");
         camera.setAuthFailed(true);
         camera.setErrorMessage("ONVIF Auth Failed: Invalid credentials");
         return false;
@@ -80,7 +80,7 @@ public class OnvifClient {
                 Logger.info("Trying ONVIF on port " + port + ": " + testUrl);
                 response = SoapHelper.sendSoapRequest(testUrl, "", soapBody, username, password);
                 camera.setOnvifServiceUrl(testUrl);
-                Logger.info("=== GetDeviceInformation SUCCESS on port " + port + " ===");
+                Logger.info("GetDeviceInformation SUCCESS on port " + port);
                 break;
             } catch (Exception e) {
                 Logger.info("Port " + port + " failed: " + e.getMessage());
@@ -211,9 +211,9 @@ public class OnvifClient {
                 mediaUrl = "http://" + baseCamera.getIpAddress() + "/onvif/media_service";
             }
             
-            Logger.info("=== GetProfiles Request for " + baseCamera.getIpAddress() + " ===");
+            Logger.info("GetProfiles Request for " + baseCamera.getIpAddress());
             String response = SoapHelper.sendSoapRequest(mediaUrl, "", profilesBody, null, null);
-            Logger.info("=== GetProfiles Response for " + baseCamera.getIpAddress() + " ===");
+            Logger.info("GetProfiles Response for " + baseCamera.getIpAddress());
             Logger.info(response);
             
             // Extract all profiles
@@ -346,12 +346,12 @@ public class OnvifClient {
                 "</StreamSetup></GetStreamUri>",
                 username, password);
             
-            Logger.info("=== GetStreamUri Request (Profile: " + profileToken + ") ===");
+            Logger.info("GetStreamUri Request (Profile: " + profileToken + ")");
             Logger.info("URL: " + mediaUrl);
             Logger.info("Request Body: " + streamBody);
             
             String response = SoapHelper.sendSoapRequest(mediaUrl, "", streamBody, null, null);
-            Logger.info("=== GetStreamUri Response ===");
+            Logger.info("GetStreamUri Response");
             Logger.info(response);
             
             String uri = SoapHelper.extractValue(response, "Uri");

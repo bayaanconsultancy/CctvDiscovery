@@ -2,6 +2,7 @@ package com.cctv.api;
 
 import com.cctv.discovery.*;
 import com.cctv.model.Camera;
+import com.cctv.model.StreamInfo;
 import com.cctv.network.IpRangeValidator;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -48,20 +49,18 @@ public class DiscoveryEngine {
                 reportProgress("Port Scanning", 0, ipRange.size(), "Starting port scan");
                 List<Camera> scannedCameras = PortScanner.scan(ipRange);
                 
-                for (Camera cam : scannedCameras) {
-                    if (!allCameras.contains(cam)) {
-                        allCameras.add(cam);
-                    }
-                }
+                // Merge camera data instead of simple add
+                mergeCameras(allCameras, scannedCameras);
+                
                 reportProgress("Port Scanning", ipRange.size(), ipRange.size(), "Port scan completed");
             }
             
             // Assign credentials and probe
             if (!allCameras.isEmpty()) {
-                assignCredentials(allCameras);
                 reportProgress("Authentication", 0, allCameras.size(), "Testing credentials");
                 
-                DeviceProber.probeAll(allCameras);
+                // Pass all credentials to DeviceProber for rotation
+                DeviceProber.probeAll(allCameras, config.getCredentials());
                 
                 // NVR Detection
                 if (config.isNvrDetectionEnabled()) {
@@ -74,11 +73,12 @@ public class DiscoveryEngine {
             for (Camera camera : allCameras) {
                 if (camera.getMainStream() != null || camera.getSubStream() != null) {
                     cameraResults.add(convertToResult(camera));
-                } else {
+                } else if (!camera.isNvr()) {
+                    // Only add error for non-NVR devices without streams
                     errors.add(new DiscoveryError(
                         camera.getIpAddress(),
                         camera.getErrorMessage() != null ? camera.getErrorMessage() : "No streams found",
-                        "Failed to discover any RTSP streams"
+                        buildErrorDetails(camera)
                     ));
                 }
             }
@@ -94,6 +94,42 @@ public class DiscoveryEngine {
         }
     }
     
+    /**
+     * Merge camera data from different discovery methods.
+     */
+    private void mergeCameras(List<Camera> allCameras, List<Camera> newCameras) {
+        for (Camera newCam : newCameras) {
+            Camera existing = findCameraByIp(allCameras, newCam.getIpAddress());
+            
+            if (existing != null) {
+                // Merge data - keep ONVIF data, add port scan data
+                if (existing.getManufacturer() == null && newCam.getManufacturer() != null) {
+                    existing.setManufacturer(newCam.getManufacturer());
+                }
+                if (existing.getModel() == null && newCam.getModel() != null) {
+                    existing.setModel(newCam.getModel());
+                }
+                if (existing.getOpenRtspPorts().isEmpty() && !newCam.getOpenRtspPorts().isEmpty()) {
+                    existing.setOpenRtspPorts(newCam.getOpenRtspPorts());
+                }
+            } else {
+                allCameras.add(newCam);
+            }
+        }
+    }
+    
+    /**
+     * Find camera by IP address.
+     */
+    private Camera findCameraByIp(List<Camera> cameras, String ipAddress) {
+        for (Camera camera : cameras) {
+            if (camera.getIpAddress().equals(ipAddress)) {
+                return camera;
+            }
+        }
+        return null;
+    }
+    
     private void assignCredentials(List<Camera> cameras) {
         for (Camera camera : cameras) {
             for (Credential cred : config.getCredentials()) {
@@ -104,22 +140,54 @@ public class DiscoveryEngine {
         }
     }
     
+    /**
+     * Detect NVR channels and keep parent NVR device.
+     */
     private void detectNvrChannels(List<Camera> cameras) {
         List<Camera> nvrChannels = new ArrayList<>();
-        List<Camera> toRemove = new ArrayList<>();
         
         for (Camera camera : cameras) {
             if (camera.getMainStream() == null) {
                 List<Camera> channels = NvrDetector.detectAndExtractChannels(camera);
                 if (!channels.isEmpty()) {
+                    // Mark parent as NVR and keep it
+                    camera.setIsNvr(true);
+                    camera.setChannelCount(channels.size());
                     nvrChannels.addAll(channels);
-                    toRemove.add(camera);
                 }
             }
         }
         
-        cameras.removeAll(toRemove);
+        // Add channels without removing parent
         cameras.addAll(nvrChannels);
+    }
+    
+    /**
+     * Build detailed error context.
+     */
+    private String buildErrorDetails(Camera camera) {
+        StringBuilder details = new StringBuilder();
+        details.append("Discovery attempts: ");
+        
+        if (camera.getOnvifServiceUrl() != null) {
+            details.append("ONVIF available, ");
+        } else {
+            details.append("ONVIF not found, ");
+        }
+        
+        if (!camera.getOpenRtspPorts().isEmpty()) {
+            details.append("Ports open: ").append(camera.getOpenRtspPorts()).append(", ");
+        } else {
+            details.append("No RTSP ports open, ");
+        }
+        
+        if (camera.isAuthFailed()) {
+            details.append("Authentication failed");
+        } else {
+            details.append("Authentication not attempted or no credentials");
+        }
+        
+        return details.toString();
     }
     
     private CameraResult convertToResult(Camera camera) {
@@ -137,28 +205,44 @@ public class DiscoveryEngine {
         }
         
         if (camera.getMainStream() != null) {
-            StreamResult mainStream = new StreamResult();
-            mainStream.setRtspUrl(camera.getMainStream().getRtspUrl());
-            mainStream.setResolution(camera.getMainStream().getResolution());
-            mainStream.setCodec(camera.getMainStream().getCodec());
-            mainStream.setBitrate(camera.getMainStream().getBitrate());
-            mainStream.setFps((int)camera.getMainStream().getFps());
-            result.setMainStream(mainStream);
+            result.setMainStream(convertStream(camera.getMainStream()));
         }
         
         if (camera.getSubStream() != null) {
-            StreamResult subStream = new StreamResult();
-            subStream.setRtspUrl(camera.getSubStream().getRtspUrl());
-            subStream.setResolution(camera.getSubStream().getResolution());
-            subStream.setCodec(camera.getSubStream().getCodec());
-            subStream.setBitrate(camera.getSubStream().getBitrate());
-            subStream.setFps((int)camera.getSubStream().getFps());
-            result.setSubStream(subStream);
+            result.setSubStream(convertStream(camera.getSubStream()));
         }
         
         result.setDiscoveryMethod(camera.getOnvifServiceUrl() != null ? "ONVIF" : "Port Scan");
         result.setAuthenticationMethod(camera.getAuthenticationMethod());
-        result.setNvr(camera.getIpAddress().contains("_ch"));
+        result.setNvr(camera.isNvr() || camera.getIpAddress().contains("_ch"));
+        
+        return result;
+    }
+    
+    /**
+     * Convert and validate stream data.
+     */
+    private StreamResult convertStream(StreamInfo stream) {
+        StreamResult result = new StreamResult();
+        
+        // Validate RTSP URL
+        if (stream.getRtspUrl() != null && stream.getRtspUrl().startsWith("rtsp://")) {
+            result.setRtspUrl(stream.getRtspUrl());
+        }
+        
+        // Validate resolution
+        if (stream.getResolution() != null && !stream.getResolution().isEmpty() && !stream.getResolution().equals("0x0")) {
+            result.setResolution(stream.getResolution());
+        } else {
+            result.setResolution("Unknown");
+        }
+        
+        // Validate codec
+        result.setCodec(stream.getCodec() != null && !stream.getCodec().isEmpty() ? stream.getCodec() : "Unknown");
+        
+        // Validate bitrate and FPS
+        result.setBitrate(stream.getBitrate() > 0 ? stream.getBitrate() : 0);
+        result.setFps(stream.getFps() > 0 ? (int)stream.getFps() : 0);
         
         return result;
     }

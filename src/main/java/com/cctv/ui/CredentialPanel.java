@@ -1,5 +1,6 @@
 package com.cctv.ui;
 
+import com.cctv.api.Credential;
 import com.cctv.discovery.DeviceProber;
 import com.cctv.model.Camera;
 import javax.swing.*;
@@ -199,19 +200,50 @@ public class CredentialPanel extends JPanel {
         setPasswordButton.setEnabled(false);
         continueButton.setEnabled(false);
         
-        ProgressPanel progressPanel = new ProgressPanel("Fetching camera details...");
+        ProgressPanel progressPanel = new ProgressPanel("Fetching camera details...", () -> {
+            // Cancel callback
+            com.cctv.discovery.DeviceProber.cancel();
+        });
         frame.addPanel(progressPanel, "probing");
         frame.showPanel("probing");
         
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-                DeviceProber.probeAll(cameras);
+                // Collect credentials from cameras
+                java.util.List<Credential> credentials = new java.util.ArrayList<>();
+                for (Camera camera : cameras) {
+                    if (camera.getUsername() != null && camera.getPassword() != null) {
+                        credentials.add(new Credential(camera.getUsername(), camera.getPassword()));
+                    }
+                }
+                
+                // Probe with progress listener
+                com.cctv.discovery.DeviceProber.probeAll(cameras, credentials, new com.cctv.discovery.DeviceProber.ProgressListener() {
+                    @Override
+                    public void onProgress(String camera, int current, int total, String status) {
+                        progressPanel.updateCurrentCamera(camera, status);
+                        progressPanel.setProgress(current, total);
+                    }
+                    
+                    @Override
+                    public void onComplete() {
+                        // Will be handled in done()
+                    }
+                    
+                    @Override
+                    public void onCancelled() {
+                        // Will be handled in done()
+                    }
+                });
+                
                 return null;
             }
             
             @Override
             protected void done() {
+                progressPanel.disableCancel();
+                
                 List<Camera> failedCameras = new ArrayList<>();
                 for (Camera camera : cameras) {
                     if (camera.isAuthFailed() || camera.getErrorMessage() != null) {

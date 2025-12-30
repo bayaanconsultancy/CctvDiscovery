@@ -8,15 +8,33 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class PortScanner {
-    private static final int[] PORTS = {554, 8554, 80, 8080};
+    // Extended port list for better camera discovery
+    private static final int[] PORTS = {
+        554, 8554,           // Standard RTSP
+        80, 8080, 8000,      // HTTP
+        443, 8443,           // HTTPS
+        5000, 5001,          // Synology NAS cameras
+        37777, 37778,        // Dahua proprietary
+        7447,                // Reolink
+        9000, 9001           // Custom/Generic
+    };
     private static final int TIMEOUT_MS = 500;
-    private static final int THREAD_POOL_SIZE = 50;
+    
+    // Dynamic thread pool size based on available processors
+    private static final int THREAD_POOL_SIZE = Math.max(4, Math.min(Runtime.getRuntime().availableProcessors() * 2, 50));
 
     public static List<Camera> scan(List<String> ipAddresses) {
-        Logger.info("Starting port scan for " + ipAddresses.size() + " IPs");
+        Logger.info("Starting port scan for " + ipAddresses.size() + " IPs with " + THREAD_POOL_SIZE + " threads");
         Set<Camera> cameras = Collections.synchronizedSet(new HashSet<>());
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         final java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger(0);
+        
+        // Add shutdown hook for graceful cleanup
+        final Thread mainThread = Thread.currentThread();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Logger.info("Shutdown detected, stopping port scanner...");
+            executor.shutdownNow();
+        }));
         
         for (String ip : ipAddresses) {
             executor.submit(() -> {
@@ -40,6 +58,8 @@ public class PortScanner {
                         camera.setOpenRtspPorts(rtspPorts);
                         cameras.add(camera);
                     }
+                } catch (Exception e) {
+                    Logger.error("Error scanning " + ip, e);
                 } finally {
                     completed.incrementAndGet();
                 }
@@ -48,9 +68,17 @@ public class PortScanner {
         
         executor.shutdown();
         try {
-            executor.awaitTermination(5, TimeUnit.MINUTES);
+            if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
+                Logger.warn("Port scan timeout reached, forcing shutdown");
+                executor.shutdownNow();
+                if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    Logger.error("Port scanner failed to terminate");
+                }
+            }
         } catch (InterruptedException e) {
             Logger.error("Port scan interrupted", e);
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
         }
         
         Logger.info("Port scan completed. Found " + cameras.size() + " cameras");

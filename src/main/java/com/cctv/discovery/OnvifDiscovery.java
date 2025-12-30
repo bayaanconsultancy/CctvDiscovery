@@ -66,27 +66,33 @@ public class OnvifDiscovery {
     }
 
     private static String extractXAddr(String xml) {
-        String tag = "<d:XAddrs>";
-        int start = xml.indexOf(tag);
-        if (start == -1) {
-            tag = "<XAddrs>";
-            start = xml.indexOf(tag);
+        if (xml == null || xml.trim().isEmpty()) {
+            return null;
         }
-        if (start == -1) return null;
-        start += tag.length();
-        int end = xml.indexOf("</", start);
-        if (end == -1) return null;
-        String addr = xml.substring(start, end).trim();
         
-        // Prefer IPv4
-        if (addr.contains(" ")) {
-            String[] addrs = addr.split("\\s+");
-            for (String a : addrs) {
-                if (!a.contains("[")) return a;
+        try {
+            // Try using SoapHelper's DOM-based extraction
+            String xAddr = com.cctv.onvif.SoapHelper.extractValue(xml, "d:XAddrs");
+            if (xAddr == null) {
+                xAddr = com.cctv.onvif.SoapHelper.extractValue(xml, "XAddrs");
             }
-            return addrs[0];
+            
+            if (xAddr != null && !xAddr.trim().isEmpty()) {
+                // Prefer IPv4 if multiple addresses
+                if (xAddr.contains(" ")) {
+                    String[] addrs = xAddr.split("\\s+");
+                    for (String a : addrs) {
+                        if (!a.contains("[")) return a;
+                    }
+                    return addrs[0];
+                }
+                return xAddr.contains("[") ? null : xAddr;
+            }
+        } catch (Exception e) {
+            Logger.error("Failed to extract XAddr from XML", e);
         }
-        return addr.contains("[") ? null : addr;
+        
+        return null;
     }
 
     private static String extractIp(String url) {

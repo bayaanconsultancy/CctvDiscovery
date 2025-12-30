@@ -20,7 +20,7 @@ public class ApiExample {
     }
     
     private static void simpleDiscovery() {
-        System.out.println("=== Simple Discovery ===");
+        System.out.println("Simple Discovery");
         
         DiscoveryResult result = CctvDiscovery.builder()
             .ipRange("192.168.1.100-192.168.1.110")
@@ -34,7 +34,7 @@ public class ApiExample {
     }
     
     private static void asyncDiscoveryWithProgress() {
-        System.out.println("\\n=== Async Discovery with Progress ===");
+        System.out.println("\\nAsync Discovery with Progress");
         
         CompletableFuture<DiscoveryResult> future = CctvDiscovery.builder()
             .ipRange("192.168.1.1-192.168.1.50")
@@ -60,7 +60,7 @@ public class ApiExample {
     }
     
     private static void advancedDiscovery() {
-        System.out.println("\\n=== Advanced Discovery ===");
+        System.out.println("\\nAdvanced Discovery");
         
         DiscoveryResult result = CctvDiscovery.builder()
             .ipRange("10.0.0.1-10.0.0.100")

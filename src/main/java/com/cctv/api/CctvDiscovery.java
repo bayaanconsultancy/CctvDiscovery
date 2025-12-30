@@ -62,11 +62,17 @@ public class CctvDiscovery {
         }
         
         public Builder threadCount(int threadCount) {
+            if (threadCount < 1) {
+                throw new IllegalArgumentException("Thread count must be at least 1");
+            }
             discovery.threadCount = threadCount;
             return this;
         }
         
         public Builder timeout(int seconds) {
+            if (seconds < 1) {
+                throw new IllegalArgumentException("Timeout must be at least 1 second");
+            }
             discovery.timeoutSeconds = seconds;
             return this;
         }
@@ -78,17 +84,21 @@ public class CctvDiscovery {
         
         public CctvDiscovery build() {
             if (discovery.ipRange == null || discovery.ipRange.isEmpty()) {
-                throw new IllegalArgumentException("IP range is required");
+                throw new IllegalStateException("IP range is required");
             }
             if (discovery.credentials.isEmpty()) {
-                throw new IllegalArgumentException("At least one credential is required");
+                throw new IllegalStateException("At least one credential is required");
             }
             return discovery;
         }
     }
     
     public DiscoveryResult discover() {
-        return discoverAsync().join();
+        try {
+            return discoverAsync().join();
+        } catch (Exception e) {
+            throw new DiscoveryException("Discovery failed", e);
+        }
     }
     
     public CompletableFuture<DiscoveryResult> discoverAsync() {
@@ -96,7 +106,10 @@ public class CctvDiscovery {
             try {
                 return performDiscovery();
             } catch (Exception e) {
-                throw new RuntimeException("Discovery failed", e);
+                if (e instanceof DiscoveryException) {
+                    throw (DiscoveryException) e;
+                }
+                throw new DiscoveryException("Discovery execution failed", e);
             }
         });
     }
@@ -107,7 +120,9 @@ public class CctvDiscovery {
     }
     
     public String getIpRange() { return ipRange; }
-    public List<Credential> getCredentials() { return credentials; }
+    public List<Credential> getCredentials() { 
+        return java.util.Collections.unmodifiableList(credentials); 
+    }
     public boolean isOnvifEnabled() { return onvifEnabled; }
     public boolean isPortScanEnabled() { return portScanEnabled; }
     public boolean isRtspGuessingEnabled() { return rtspGuessingEnabled; }

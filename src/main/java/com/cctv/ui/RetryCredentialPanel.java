@@ -1,5 +1,6 @@
 package com.cctv.ui;
 
+import com.cctv.api.Credential;
 import com.cctv.discovery.DeviceProber;
 import com.cctv.model.Camera;
 import com.cctv.util.Logger;
@@ -109,7 +110,7 @@ public class RetryCredentialPanel extends JPanel {
                         String password = (String) tableModel.getValueAt(i, 3);
                         Camera cam = failedCameras.get(i);
                         
-                        Logger.info("=== Retry: Setting credentials for " + cam.getIpAddress() + " ===");
+                        Logger.info("Retry: Setting credentials for " + cam.getIpAddress());
                         Logger.info("New Username: " + username + ", Has Password: " + (password != null && !password.isEmpty()));
                         
                         cam.setUsername(username);
@@ -120,7 +121,15 @@ public class RetryCredentialPanel extends JPanel {
                         cam.setSubStream(null);
                     }
                     
-                    DeviceProber.probeAll(failedCameras);
+                    // Collect credentials from failed cameras
+                    java.util.List<Credential> credentials = new java.util.ArrayList<>();
+                    for (Camera cam : failedCameras) {
+                        if (cam.getUsername() != null && cam.getPassword() != null) {
+                            credentials.add(new Credential(cam.getUsername(), cam.getPassword()));
+                        }
+                    }
+                    
+                    DeviceProber.probeAll(failedCameras, credentials);
                     
                     for (Camera cam : failedCameras) {
                         if (cam.getMainStream() == null && cam.getErrorMessage() != null && 

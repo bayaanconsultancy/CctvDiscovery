@@ -14,8 +14,23 @@ import java.util.List;
 
 public class ExcelExporter {
 
+    /**
+     * Export cameras to Excel with plaintext passwords.
+     * @deprecated Use export(cameras, filePath, maskPasswords) for better security
+     */
     public static void export(List<Camera> cameras, String filePath) {
-        Logger.info("Exporting " + cameras.size() + " cameras to Excel");
+        export(cameras, filePath, false);
+    }
+    
+    /**
+     * Export cameras to Excel with optional password masking.
+     * 
+     * @param cameras List of cameras to export
+     * @param filePath Output file path
+     * @param maskPasswords If true, passwords will be masked as "****"
+     */
+    public static void export(List<Camera> cameras, String filePath, boolean maskPasswords) {
+        Logger.info("Exporting " + cameras.size() + " cameras to Excel (passwords masked: " + maskPasswords + ")");
         
         // Sort cameras by IP address
         Collections.sort(cameras, new Comparator<Camera>() {
@@ -27,6 +42,22 @@ public class ExcelExporter {
         
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("CCTV Discovery");
+            
+            // Add security warning if passwords are not masked
+            if (!maskPasswords) {
+                Row warningRow = sheet.createRow(0);
+                Cell warningCell = warningRow.createCell(0);
+                warningCell.setCellValue("⚠️ WARNING: This file contains PLAINTEXT PASSWORDS. Store securely and delete when no longer needed.");
+                
+                CellStyle warningStyle = workbook.createCellStyle();
+                Font warningFont = workbook.createFont();
+                warningFont.setColor(IndexedColors.RED.getIndex());
+                warningFont.setBold(true);
+                warningStyle.setFont(warningFont);
+                warningCell.setCellStyle(warningStyle);
+                
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+            }
             
             // Create styles
             Font monoFont = workbook.createFont();
@@ -50,7 +81,8 @@ public class ExcelExporter {
             redFont.setColor(IndexedColors.RED.getIndex());
             redStyle.setFont(redFont);
             
-            Row header = sheet.createRow(0);
+            int headerRowNum = maskPasswords ? 0 : 1;
+            Row header = sheet.createRow(headerRowNum);
             String[] headers = {"IP Address", "Manufacturer", "Model", "Camera Name", "Serial Number", "Firmware", "Time Diff (sec)",
                 "Username", "Password", 
                 "Main RTSP URL", "Main Resolution", "Main Codec", "Main Bitrate (kbps)", "Main FPS",
@@ -62,9 +94,9 @@ public class ExcelExporter {
             }
             
             // Freeze header row
-            sheet.createFreezePane(0, 1);
+            sheet.createFreezePane(0, headerRowNum + 1);
             
-            int rowNum = 1;
+            int rowNum = headerRowNum + 1;
             for (Camera camera : cameras) {
                 Row row = sheet.createRow(rowNum++);
                 createStyledCell(row, 0, camera.getIpAddress(), defaultStyle);
@@ -75,7 +107,11 @@ public class ExcelExporter {
                 createStyledCell(row, 5, camera.getFirmwareVersion() != null ? camera.getFirmwareVersion() : "", defaultStyle);
                 createStyledCell(row, 6, String.valueOf(camera.getTimeDifferenceMs() / 1000), defaultStyle);
                 createStyledCell(row, 7, camera.getUsername() != null ? camera.getUsername() : "", defaultStyle);
-                createStyledCell(row, 8, camera.getPassword() != null ? camera.getPassword() : "", defaultStyle);
+                String password = camera.getPassword() != null ? camera.getPassword() : "";
+                if (maskPasswords && !password.isEmpty()) {
+                    password = "****";
+                }
+                createStyledCell(row, 8, password, defaultStyle);
                 
                 StreamInfo main = camera.getMainStream();
                 if (main != null) {

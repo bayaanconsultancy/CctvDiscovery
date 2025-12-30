@@ -2,6 +2,7 @@ package com.cctv.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Camera {
     private String ipAddress;
@@ -20,6 +21,8 @@ public class Camera {
     private volatile long timeDifferenceMs;
     private String authenticationMethod;
     private List<Integer> openRtspPorts = new ArrayList<>();
+    private boolean isNvr = false;  // Mark if this is an NVR parent device
+    private int channelCount = 0;   // Number of channels if NVR
     private final Object lock = new Object();
 
     public Camera(String ipAddress) {
@@ -105,16 +108,26 @@ public class Camera {
     public List<Integer> getOpenRtspPorts() { return openRtspPorts; }
     public void setOpenRtspPorts(List<Integer> openRtspPorts) { this.openRtspPorts = openRtspPorts; }
 
+    public boolean isNvr() { return isNvr; }
+    public void setIsNvr(boolean isNvr) { this.isNvr = isNvr; }
+
+    public int getChannelCount() { return channelCount; }
+    public void setChannelCount(int channelCount) { this.channelCount = channelCount; }
+
+    /**
+     * CRITICAL FIX: equals() and hashCode() now properly handle NVR channels
+     * Cameras are equal if they have the same IP address (including channel suffix)
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Camera camera = (Camera) o;
-        return ipAddress.equals(camera.ipAddress);
+        return Objects.equals(ipAddress, camera.ipAddress);
     }
 
     @Override
     public int hashCode() {
-        return ipAddress.hashCode();
+        return Objects.hash(ipAddress);
     }
 }
