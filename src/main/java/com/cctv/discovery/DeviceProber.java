@@ -60,7 +60,7 @@ public class DeviceProber {
                             + cameras.size() + ")");
 
                     // Try all credentials until one works
-                    boolean success = tryAllCredentials(camera, credentials, listener);
+                    boolean success = tryAllCredentials(camera, credentials, listener, currentCount, cameras.size());
 
                     if (success) {
                         // Try NVR/DVR channel detection if single camera succeeded
@@ -142,7 +142,8 @@ public class DeviceProber {
     /**
      * Try all provided credentials until one works.
      */
-    private static boolean tryAllCredentials(Camera camera, List<Credential> credentials, ProgressListener listener) {
+    private static boolean tryAllCredentials(Camera camera, List<Credential> credentials, ProgressListener listener,
+            int currentCameraIndex, int totalCameras) {
         // Validate credentials before attempting authentication
         if (credentials == null || credentials.isEmpty()) {
             Logger.info("Skipping camera - no credentials provided");
@@ -169,7 +170,7 @@ public class DeviceProber {
 
             // Update progress
             if (listener != null) {
-                listener.onProgress(camera.getIpAddress(), 0, 0,
+                listener.onProgress(camera.getIpAddress(), currentCameraIndex, totalCameras,
                         "Trying credential " + (i + 1) + "/" + credentials.size());
             }
 
@@ -218,14 +219,9 @@ public class DeviceProber {
 
             // Only try RTSP URL guessing if ONVIF was not attempted or failed without auth
             // error
-            if (!onvifAttempted && !camera.isAuthFailed()) {
-                Logger.info("ONVIF not available, trying RTSP URL patterns");
-                if (RtspUrlGuesser.tryGuessUrls(camera)) {
-                    Logger.info("SUCCESS: Credential #" + (i + 1) + " worked via RTSP");
-                    return true;
-                }
-            } else if (onvifAttempted && !onvifSuccess && !camera.isAuthFailed()) {
-                Logger.info("ONVIF available but returned no streams, trying RTSP URL patterns");
+            if (!onvifSuccess) {
+                Logger.info("ONVIF not successful (Attempted: " + onvifAttempted + ", AuthFailed: "
+                        + camera.isAuthFailed() + "), trying RTSP URL patterns");
                 if (RtspUrlGuesser.tryGuessUrls(camera)) {
                     Logger.info("SUCCESS: Credential #" + (i + 1) + " worked via RTSP");
                     return true;

@@ -1,138 +1,200 @@
 package com.cctv.ui;
 
 import com.cctv.api.Credential;
-
 import com.cctv.model.Camera;
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CredentialPanel extends JPanel {
-    private JTable table;
-    private DefaultTableModel tableModel;
+    private JTable cameraTable;
+    private DefaultTableModel cameraTableModel;
     private List<Camera> cameras;
-    private JButton setPasswordButton;
+
+    // Credential Management
+    private JTable credentialTable;
+    private DefaultTableModel credentialTableModel;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JButton addCredentialButton;
+    private JButton removeCredentialButton;
     private JButton continueButton;
-    private JLabel statusLabel;
 
     public CredentialPanel(WizardFrame frame, List<Camera> cameras) {
         this.cameras = cameras;
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // --- Header ---
         JPanel headerPanel = new JPanel(new BorderLayout());
-        JLabel title = new JLabel("Assign Credentials");
+        JLabel title = new JLabel("Discovery Results & Credentials");
         title.setFont(new Font("Arial", Font.BOLD, 18));
-        title.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
         headerPanel.add(title, BorderLayout.NORTH);
 
-        statusLabel = new JLabel("0/" + cameras.size() + " cameras configured");
-        statusLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        statusLabel.setForeground(new Color(220, 53, 69));
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-        headerPanel.add(statusLabel, BorderLayout.SOUTH);
+        JLabel subtitle = new JLabel("Add credentials to try against all discovered devices.");
+        subtitle.setForeground(Color.GRAY);
+        headerPanel.add(subtitle, BorderLayout.SOUTH);
 
         add(headerPanel, BorderLayout.NORTH);
 
-        String[] columns = { "Select", "IP Address", "Username", "Password" };
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public Class<?> getColumnClass(int column) {
-                return column == 0 ? Boolean.class : String.class;
-            }
+        // --- Main Content (Split Pane) ---
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setResizeWeight(0.6); // 60% for camera list
+        splitPane.setDividerLocation(500);
 
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 0 || column == 2 || column == 3;
-            }
-        };
+        // 1. Left: Camera List
+        JPanel cameraListPanel = createCameraListPanel();
+        splitPane.setLeftComponent(cameraListPanel);
 
-        for (Camera camera : cameras) {
-            tableModel.addRow(new Object[] { false, camera.getIpAddress(), "", "" });
-        }
+        // 2. Right: Credential Manager
+        JPanel credentialManagerPanel = createCredentialManagerPanel();
+        splitPane.setRightComponent(credentialManagerPanel);
 
-        table = new JTable(tableModel);
-        table.getColumnModel().getColumn(0).setMaxWidth(50);
-        table.setRowHeight(25);
-        table.setShowGrid(true);
-        table.setGridColor(new Color(230, 230, 230));
+        add(splitPane, BorderLayout.CENTER);
 
-        DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) {
-                    String username = (String) tableModel.getValueAt(row, 2);
-                    String password = (String) tableModel.getValueAt(row, 3);
-                    if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-                        c.setBackground(new Color(255, 250, 205));
-                    } else {
-                        c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 248, 248));
-                    }
-                }
-                return c;
-            }
-        };
-
-        for (int i = 1; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(renderer);
-        }
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-
-        JButton selectAllButton = createStyledButton("Select All", new Color(74, 144, 226), new Color(53, 122, 189));
-        selectAllButton.addActionListener(e -> {
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                tableModel.setValueAt(true, i, 0);
-            }
-        });
-        buttonPanel.add(selectAllButton);
-
-        setPasswordButton = createStyledButton("Set Credentials", new Color(74, 144, 226), new Color(53, 122, 189));
-        setPasswordButton.setEnabled(false);
-        setPasswordButton.addActionListener(e -> showCredentialDialog());
-        buttonPanel.add(setPasswordButton);
-
-        continueButton = createStyledButton("Continue", new Color(92, 184, 92), new Color(68, 157, 68));
-        continueButton.setEnabled(false);
+        // --- Bottom: Actions ---
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Centered
+        continueButton = createStyledButton("Start Probing", new Color(92, 184, 92), new Color(68, 157, 68));
+        continueButton.setEnabled(false); // Enable only when at least one credential is added
+        continueButton.setPreferredSize(new Dimension(200, 40));
         continueButton.addActionListener(e -> proceedToProbing(frame));
         buttonPanel.add(continueButton);
 
-        table.getModel().addTableModelListener(e -> {
-            boolean anySelected = false;
-            int configuredCount = 0;
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
 
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                if ((Boolean) tableModel.getValueAt(i, 0)) {
-                    anySelected = true;
-                }
-                String username = (String) tableModel.getValueAt(i, 2);
-                String password = (String) tableModel.getValueAt(i, 3);
-                if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
-                    configuredCount++;
-                }
+    private JPanel createCameraListPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Discovered Devices"));
+
+        String[] columns = { "#", "IP Address", "Manufacturer", "Status" };
+        cameraTableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Read-only
             }
+        };
 
-            setPasswordButton.setEnabled(anySelected);
-            continueButton.setEnabled(configuredCount == cameras.size());
+        int index = 1;
+        for (Camera camera : cameras) {
+            String manufacturer = camera.getManufacturer() != null ? camera.getManufacturer() : "Unknown";
+            cameraTableModel.addRow(new Object[] { index++, camera.getIpAddress(), manufacturer, "Pending" });
+        }
 
-            statusLabel.setText(configuredCount + "/" + cameras.size() + " cameras configured");
-            if (configuredCount == cameras.size()) {
-                statusLabel.setForeground(new Color(92, 184, 92));
-            } else {
-                statusLabel.setForeground(new Color(220, 53, 69));
+        cameraTable = new JTable(cameraTableModel);
+        cameraTable.getColumnModel().getColumn(0).setMaxWidth(40);
+        cameraTable.setRowHeight(25);
+        cameraTable.setShowGrid(true);
+        cameraTable.setGridColor(new Color(230, 230, 230));
+
+        // Custom renderer for rows
+        DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+        for (int i = 0; i < cameraTable.getColumnCount(); i++) {
+            cameraTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
+
+        panel.add(new JScrollPane(cameraTable), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createCredentialManagerPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Credential Pool"));
+
+        // Input Form
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        inputPanel.add(new JLabel("Username:"), gbc);
+
+        gbc.gridx = 1;
+        usernameField = new JTextField("admin", 12); // Default to "admin"
+        inputPanel.add(usernameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        inputPanel.add(new JLabel("Password:"), gbc);
+
+        gbc.gridx = 1;
+        passwordField = new JPasswordField(12);
+        inputPanel.add(passwordField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        addCredentialButton = createStyledButton("Add to List", new Color(74, 144, 226), new Color(53, 122, 189));
+        addCredentialButton.setPreferredSize(new Dimension(100, 30));
+        addCredentialButton.addActionListener(e -> addCredential());
+        inputPanel.add(addCredentialButton, gbc);
+
+        panel.add(inputPanel, BorderLayout.NORTH);
+
+        // Table Display
+        String[] columns = { "Username", "Password" };
+        credentialTableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
             }
+        };
 
-            table.repaint();
+        credentialTable = new JTable(credentialTableModel);
+        credentialTable.setRowHeight(25);
+        credentialTable.setShowGrid(true);
+        credentialTable.setGridColor(new Color(230, 230, 230));
+        credentialTable.getSelectionModel().addListSelectionListener(e -> {
+            removeCredentialButton.setEnabled(credentialTable.getSelectedRow() != -1);
         });
 
-        add(buttonPanel, BorderLayout.SOUTH);
+        panel.add(new JScrollPane(credentialTable), BorderLayout.CENTER);
+
+        // Remove Button
+        JPanel bottomPanel = new JPanel(new FlowLayout());
+        removeCredentialButton = new JButton("Remove Selected");
+        removeCredentialButton.setEnabled(false);
+        removeCredentialButton.addActionListener(e -> {
+            int selectedRow = credentialTable.getSelectedRow();
+            if (selectedRow != -1) {
+                credentialTableModel.removeRow(selectedRow);
+                updateContinueButton();
+            }
+        });
+        bottomPanel.add(removeCredentialButton);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private void addCredential() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        if (username.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username cannot be empty.", "Input Error",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Add to table (Password visible as requested)
+        credentialTableModel.addRow(new Object[] { username, password });
+
+        // Clear fields (reset username to admin for convenience)
+        usernameField.setText("admin");
+        passwordField.setText("");
+        passwordField.requestFocus();
+
+        updateContinueButton();
+    }
+
+    private void updateContinueButton() {
+        continueButton.setEnabled(credentialTableModel.getRowCount() > 0);
     }
 
     private JButton createStyledButton(String text, Color color1, Color color2) {
@@ -166,45 +228,21 @@ public class CredentialPanel extends JPanel {
         return button;
     }
 
-    private void showCredentialDialog() {
-        JTextField userField = new JTextField("admin", 15);
-        JPasswordField passField = new JPasswordField(15);
-        JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
-        panel.add(new JLabel("Username:"));
-        panel.add(userField);
-        panel.add(new JLabel("Password:"));
-        panel.add(passField);
-
-        SwingUtilities.invokeLater(() -> passField.requestFocusInWindow());
-
-        int result = JOptionPane.showConfirmDialog(this, panel, "Enter Credentials", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
-            String username = userField.getText().trim();
-            String password = new String(passField.getPassword());
-
-            if (username.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Username cannot be empty", "Validation Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                if ((Boolean) tableModel.getValueAt(i, 0)) {
-                    tableModel.setValueAt(username, i, 2);
-                    tableModel.setValueAt(password, i, 3);
-                    cameras.get(i).setUsername(username);
-                    cameras.get(i).setPassword(password);
-                }
-            }
-        }
-    }
-
     private void proceedToProbing(WizardFrame frame) {
-        setPasswordButton.setEnabled(false);
+        // Disable buttons
         continueButton.setEnabled(false);
+        addCredentialButton.setEnabled(false);
+        removeCredentialButton.setEnabled(false);
+
+        // Collect credentials from table
+        List<Credential> credentials = new ArrayList<>();
+        for (int i = 0; i < credentialTableModel.getRowCount(); i++) {
+            String user = (String) credentialTableModel.getValueAt(i, 0);
+            String pass = (String) credentialTableModel.getValueAt(i, 1);
+            credentials.add(new Credential(user, pass));
+        }
 
         ProgressPanel progressPanel = new ProgressPanel("Fetching camera details...", () -> {
-            // Cancel callback
             com.cctv.discovery.DeviceProber.cancel();
         });
         frame.addPanel(progressPanel, "probing");
@@ -213,15 +251,7 @@ public class CredentialPanel extends JPanel {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-                // Collect credentials from cameras
-                java.util.List<Credential> credentials = new java.util.ArrayList<>();
-                for (Camera camera : cameras) {
-                    if (camera.getUsername() != null && camera.getPassword() != null) {
-                        credentials.add(new Credential(camera.getUsername(), camera.getPassword()));
-                    }
-                }
-
-                // Probe with progress listener
+                // Probe with global credential list
                 com.cctv.discovery.DeviceProber.probeAll(cameras, credentials,
                         new com.cctv.discovery.ProgressListener() {
                             @Override
@@ -232,12 +262,10 @@ public class CredentialPanel extends JPanel {
 
                             @Override
                             public void onComplete() {
-                                // Will be handled in done()
                             }
 
                             @Override
                             public void onCancelled() {
-                                // Will be handled in done()
                             }
                         });
 

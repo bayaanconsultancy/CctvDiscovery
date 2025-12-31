@@ -1,133 +1,53 @@
-# RTSP URL Patterns by Manufacturer
+# RTSP URL Patterns - Indian Market Edition
 # Format: main_stream_path, sub_stream_path
 # Lines starting with # are comments
 
-# Hikvision (multiple firmware versions)
+# Hikvision / Prama / HiLook / Ezviz
 /Streaming/Channels/101, /Streaming/Channels/102
 /Streaming/Channels/1, /Streaming/Channels/2
-/Streaming/Channels/1/0, /Streaming/Channels/1/1
 /ISAPI/Streaming/channels/101, /ISAPI/Streaming/channels/102
-/ISAPI/Streaming/channels/1, /ISAPI/Streaming/channels/2
 /h264/ch1/main/av_stream, /h264/ch1/sub/av_stream
-/PSIA/streaming/channels/1?videoCodecType=H.264, /PSIA/streaming/channels/2?videoCodecType=H.264
-/streaming/channels/1, /streaming/channels/2
 /cam1/h264, /cam1/h264/sub
-/live1.sdp, /live2.sdp
 
-# Dahua
+# Dahua / CP Plus / Ezykam
 /cam/realmonitor?channel=1&subtype=0, /cam/realmonitor?channel=1&subtype=1
 /cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif, /cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-/live/ch1, /live/ch2
 /live/main, /live/sub
-/h264/ch1/main/av_stream, /h264/ch1/sub/av_stream
-/streaming/channels/1, /streaming/channels/2
+/live/ch1, /live/ch2
+
+# UNV (Uniview)
+/live/main, /live/sub
+/media/video1, /media/video2
+/uni/stream1, /uni/stream2
+
+# Tiandy
+/1/1, /1/2
+/live/main, /live/sub
+
+# TVT
+/stream1, /stream2
+/live/main, /live/sub
+
+# Godrej (Often rebadges others, but common patterns)
+/RNi/Live/main, /RNi/Live/sub
+/cgi-bin/rtspstream/1, /cgi-bin/rtspstream/2
+/cam/realmonitor?channel=1&subtype=0, /cam/realmonitor?channel=1&subtype=1
+
+# Axis
+/axis-media/media.amp?videocodec=h264, /axis-media/media.amp?videocodec=h264&resolution=320x240
+/onvif-media/media.amp, /onvif-media/media.amp?profile=profile_1_h264
 
 # TP-Link / Tapo
 /stream1, /stream2
 /live/ch00_0, /live/ch00_1
-/h264_ulaw.sdp, /h264_ulaw_sub.sdp
-/11, /12
-/onvif1, /onvif2
 
-# Axis
-/axis-media/media.amp?videocodec=h264, /axis-media/media.amp?videocodec=h264&resolution=640x360
-/axis-media/media.amp, /axis-media/media.amp?resolution=320x240
-/mjpg/video.mjpg, /mjpg/video.mjpg?resolution=320x240
-/mpeg4/media.amp, /mpeg4/media.amp?resolution=320x240
-/onvif-media/media.amp, /onvif-media/media.amp?profile=profile_1_h264
-
-# Foscam
-/videoMain, /videoSub
-/video.cgi?resolution=32, /video.cgi?resolution=8
-/cgi-bin/CGIProxy.fcgi?cmd=snapPicture2&usr=admin&pwd=, /cgi-bin/CGIProxy.fcgi?cmd=snapPicture2&usr=admin&pwd=&resolution=8
-/streaming/channels/1, /streaming/channels/2
-/h264_ulaw.sdp, /h264_ulaw_sub.sdp
-
-# D-Link
-/live1.sdp, /live2.sdp
-/video.cgi, /video2.cgi
-/h264/ch1/main/av_stream, /h264/ch1/sub/av_stream
-/streaming/channels/1, /streaming/channels/2
-
-# Amcrest
-/cam/realmonitor?channel=1&subtype=0, /cam/realmonitor?channel=1&subtype=1
-/streaming/channels/1, /streaming/channels/2
-/h264/ch1/main/av_stream, /h264/ch1/sub/av_stream
-
-# Reolink
-/h264Preview_01_main, /h264Preview_01_sub
-/bcs/channel0_main.bcs?channel=0&stream=0&user=admin&password=, /bcs/channel0_sub.bcs?channel=0&stream=1&user=admin&password=
-/streaming/channels/1, /streaming/channels/2
-
-# Ubiquiti UniFi
-/s0, /s1
-/live/ch00_0, /live/ch00_1
-
-# Vivotek
-/video.mjpg, /video2.mjpg
-/streaming/channels/1, /streaming/channels/2
-/live.sdp, /live2.sdp
-
-# Panasonic
-/MediaInput/h264, /MediaInput/h264/stream_2
-/nphMotionJpeg?Resolution=640x480&Quality=Standard, /nphMotionJpeg?Resolution=320x240&Quality=Standard
-
-# Sony
-/media/video1, /media/video2
-/streaming/channels/1, /streaming/channels/2
-
-# Bosch
-/rtsp_tunnel?h26x=4&line=1&inst=1, /rtsp_tunnel?h26x=4&line=1&inst=2
-/streaming/channels/1, /streaming/channels/2
-
-# Pelco
-/stream1, /stream2
-/streaming/channels/1, /streaming/channels/2
-
-# Honeywell
-/streaming/channels/1, /streaming/channels/2
-/h264/ch1/main/av_stream, /h264/ch1/sub/av_stream
-
-# FLIR
-/streaming/channels/1, /streaming/channels/2
-/h264/ch1/main/av_stream, /h264/ch1/sub/av_stream
-
-# Avigilon
-/defaultPrimary?streamType=u, /defaultSecondary?streamType=u
-/streaming/channels/1, /streaming/channels/2
-
-# Mobotix
-/control/faststream.jpg?stream=full, /control/faststream.jpg?stream=MxPEG_Stream
-
-# Geovision
-/cam/realmonitor?channel=1&subtype=0, /cam/realmonitor?channel=1&subtype=1
-/streaming/channels/1, /streaming/channels/2
-
-# Generic patterns (common across multiple manufacturers)
+# Generic / Other Indian Brands (Sparsh, Zicom, etc.)
 /live/channel0, /live/channel1
 /live/main, /live/sub
 /stream, /substream
+/stream1, /stream2
+/main, /sub
 /ch0, /ch1
 /0, /1
 /video, /video2
-/h264, /h264_sub
-/cam1, /cam2
-/media, /media2
-/rtsp, /rtsp_sub
-/main, /sub
-/primary, /secondary
-/stream0, /stream1
-/channel1, /channel2
-/live, /live_sub
-/video1, /video2
-/cam/1, /cam/2
-/stream/1, /stream/2
-/channel/1, /channel/2
-/media/1, /media/2
-/rtsp/1, /rtsp/2
-/onvif/1, /onvif/2
-/h264/1, /h264/2
-/mjpeg, /mjpeg_sub
-/mpeg4, /mpeg4_sub
-/av_stream, /av_stream_sub
-/realmonitor, /realmonitor_sub
+/media/video1, /media/video2

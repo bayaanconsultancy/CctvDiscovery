@@ -6,20 +6,25 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
+        // Set up timestamped log file
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+        String timestamp = sdf.format(new java.util.Date());
+        System.setProperty("org.slf4j.simpleLogger.logFile", "cctv-discovery-" + timestamp + ".log");
+
         Logger.info("CCTV Discovery Tool started");
-        
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Logger.info("Shutting down CCTV Discovery Tool...");
             com.cctv.discovery.RtspUrlGuesser.shutdown();
         }));
-        
+
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
                 Logger.error("Failed to set look and feel", e);
             }
-            
+
             WizardFrame frame = new WizardFrame();
             frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
             frame.addWindowListener(new java.awt.event.WindowAdapter() {

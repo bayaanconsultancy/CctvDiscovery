@@ -21,14 +21,15 @@ public class Camera {
     private volatile long timeDifferenceMs;
     private String authenticationMethod;
     private List<Integer> openRtspPorts = new ArrayList<>();
-    private boolean isNvr = false;  // Mark if this is an NVR parent device
-    private int channelCount = 0;   // Number of channels if NVR
+    private boolean isNvr = false; // Mark if this is an NVR parent device
+    private int channelCount = 0; // Number of channels if NVR
+    private String macAddress; // MAC Address of the device
     private final Object lock = new Object();
 
     public Camera(String ipAddress) {
         this.ipAddress = ipAddress;
     }
-    
+
     // Copy constructor
     public Camera(Camera other) {
         this.ipAddress = other.ipAddress;
@@ -48,71 +49,169 @@ public class Camera {
         // Note: streams are not copied as they will be set individually per channel
     }
 
-    public String getIpAddress() { return ipAddress; }
-    public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
-
-    public String getOnvifServiceUrl() { return onvifServiceUrl; }
-    public void setOnvifServiceUrl(String onvifServiceUrl) { this.onvifServiceUrl = onvifServiceUrl; }
-
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public StreamInfo getMainStream() { 
-        synchronized(lock) { return mainStream; }
-    }
-    public void setMainStream(StreamInfo mainStream) { 
-        synchronized(lock) { this.mainStream = mainStream; }
+    public String getIpAddress() {
+        return ipAddress;
     }
 
-    public StreamInfo getSubStream() { 
-        synchronized(lock) { return subStream; }
-    }
-    public void setSubStream(StreamInfo subStream) { 
-        synchronized(lock) { this.subStream = subStream; }
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
-    public boolean isAuthFailed() { return authFailed; }
-    public void setAuthFailed(boolean authFailed) { this.authFailed = authFailed; }
-
-    public String getErrorMessage() { 
-        synchronized(lock) { return errorMessage; }
-    }
-    public void setErrorMessage(String errorMessage) { 
-        synchronized(lock) { this.errorMessage = errorMessage; }
+    public String getOnvifServiceUrl() {
+        return onvifServiceUrl;
     }
 
-    public String getManufacturer() { return manufacturer; }
-    public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
+    public void setOnvifServiceUrl(String onvifServiceUrl) {
+        this.onvifServiceUrl = onvifServiceUrl;
+    }
 
-    public String getModel() { return model; }
-    public void setModel(String model) { this.model = model; }
+    public String getUsername() {
+        return username;
+    }
 
-    public String getCameraName() { return cameraName; }
-    public void setCameraName(String cameraName) { this.cameraName = cameraName; }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-    public String getSerialNumber() { return serialNumber; }
-    public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }
+    public String getPassword() {
+        return password;
+    }
 
-    public String getFirmwareVersion() { return firmwareVersion; }
-    public void setFirmwareVersion(String firmwareVersion) { this.firmwareVersion = firmwareVersion; }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-    public long getTimeDifferenceMs() { return timeDifferenceMs; }
-    public void setTimeDifferenceMs(long timeDifferenceMs) { this.timeDifferenceMs = timeDifferenceMs; }
+    public StreamInfo getMainStream() {
+        synchronized (lock) {
+            return mainStream;
+        }
+    }
 
-    public String getAuthenticationMethod() { return authenticationMethod; }
-    public void setAuthenticationMethod(String authenticationMethod) { this.authenticationMethod = authenticationMethod; }
+    public void setMainStream(StreamInfo mainStream) {
+        synchronized (lock) {
+            this.mainStream = mainStream;
+        }
+    }
 
-    public List<Integer> getOpenRtspPorts() { return openRtspPorts; }
-    public void setOpenRtspPorts(List<Integer> openRtspPorts) { this.openRtspPorts = openRtspPorts; }
+    public StreamInfo getSubStream() {
+        synchronized (lock) {
+            return subStream;
+        }
+    }
 
-    public boolean isNvr() { return isNvr; }
-    public void setIsNvr(boolean isNvr) { this.isNvr = isNvr; }
+    public void setSubStream(StreamInfo subStream) {
+        synchronized (lock) {
+            this.subStream = subStream;
+        }
+    }
 
-    public int getChannelCount() { return channelCount; }
-    public void setChannelCount(int channelCount) { this.channelCount = channelCount; }
+    public boolean isAuthFailed() {
+        return authFailed;
+    }
+
+    public void setAuthFailed(boolean authFailed) {
+        this.authFailed = authFailed;
+    }
+
+    public String getErrorMessage() {
+        synchronized (lock) {
+            return errorMessage;
+        }
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        synchronized (lock) {
+            this.errorMessage = errorMessage;
+        }
+    }
+
+    public String getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getCameraName() {
+        return cameraName;
+    }
+
+    public void setCameraName(String cameraName) {
+        this.cameraName = cameraName;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    public void setSerialNumber(String serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    public String getFirmwareVersion() {
+        return firmwareVersion;
+    }
+
+    public void setFirmwareVersion(String firmwareVersion) {
+        this.firmwareVersion = firmwareVersion;
+    }
+
+    public long getTimeDifferenceMs() {
+        return timeDifferenceMs;
+    }
+
+    public void setTimeDifferenceMs(long timeDifferenceMs) {
+        this.timeDifferenceMs = timeDifferenceMs;
+    }
+
+    public String getAuthenticationMethod() {
+        return authenticationMethod;
+    }
+
+    public void setAuthenticationMethod(String authenticationMethod) {
+        this.authenticationMethod = authenticationMethod;
+    }
+
+    public List<Integer> getOpenRtspPorts() {
+        return openRtspPorts;
+    }
+
+    public void setOpenRtspPorts(List<Integer> openRtspPorts) {
+        this.openRtspPorts = openRtspPorts;
+    }
+
+    public boolean isNvr() {
+        return isNvr;
+    }
+
+    public void setIsNvr(boolean isNvr) {
+        this.isNvr = isNvr;
+    }
+
+    public int getChannelCount() {
+        return channelCount;
+    }
+
+    public void setChannelCount(int channelCount) {
+        this.channelCount = channelCount;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
 
     /**
      * CRITICAL FIX: equals() and hashCode() now properly handle NVR channels
@@ -120,8 +219,10 @@ public class Camera {
      */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Camera camera = (Camera) o;
         return Objects.equals(ipAddress, camera.ipAddress);
     }
