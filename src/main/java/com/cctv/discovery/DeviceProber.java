@@ -12,18 +12,10 @@ import java.util.concurrent.*;
 
 public class DeviceProber {
     // Dynamic thread pool size based on CPU cores
-    private static final int THREAD_POOL_SIZE = Math.max(4, Math.min(Runtime.getRuntime().availableProcessors() * 2, 20));
-    
-    private static volatile boolean cancelled = false;
+    private static final int THREAD_POOL_SIZE = Math.max(4,
+            Math.min(Runtime.getRuntime().availableProcessors() * 2, 20));
 
-    /**
-     * Progress listener interface for real-time UI updates.
-     */
-    public interface ProgressListener {
-        void onProgress(String camera, int current, int total, String status);
-        void onComplete();
-        void onCancelled();
-    }
+    private static volatile boolean cancelled = false;
 
     /**
      * Cancel ongoing discovery operation.
@@ -40,14 +32,14 @@ public class DeviceProber {
         cancelled = false; // Reset cancellation flag
         Logger.info("Starting device probing for " + cameras.size() + " cameras with " + THREAD_POOL_SIZE + " threads");
         Logger.info("Will try " + credentials.size() + " credential(s) per camera");
-        
+
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-        
+
         // Use ConcurrentHashMap to track cameras to add/remove
         ConcurrentHashMap<Camera, List<Camera>> cameraReplacements = new ConcurrentHashMap<>();
         List<Future<?>> futures = new ArrayList<>();
         final java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger(0);
-        
+
         for (Camera camera : cameras) {
             Future<?> future = executor.submit(() -> {
                 try {
@@ -56,26 +48,28 @@ public class DeviceProber {
                         Logger.info("Skipping " + camera.getIpAddress() + " - discovery cancelled");
                         return;
                     }
-                    
+
                     int currentCount = completed.incrementAndGet();
-                    
+
                     // Update progress
                     if (listener != null) {
                         listener.onProgress(camera.getIpAddress(), currentCount, cameras.size(), "Authenticating...");
                     }
-                    
-                    Logger.info("Processing camera: " + camera.getIpAddress() + " (" + currentCount + "/" + cameras.size() + ")");
-                    
+
+                    Logger.info("Processing camera: " + camera.getIpAddress() + " (" + currentCount + "/"
+                            + cameras.size() + ")");
+
                     // Try all credentials until one works
                     boolean success = tryAllCredentials(camera, credentials, listener);
-                    
+
                     if (success) {
                         // Try NVR/DVR channel detection if single camera succeeded
                         if (camera.getMainStream() != null) {
                             if (listener != null) {
-                                listener.onProgress(camera.getIpAddress(), currentCount, cameras.size(), "Detecting NVR channels...");
+                                listener.onProgress(camera.getIpAddress(), currentCount, cameras.size(),
+                                        "Detecting NVR channels...");
                             }
-                            
+
                             Logger.info("Trying NVR/DVR channel detection for " + camera.getIpAddress());
                             List<Camera> channels = NvrDetector.detectAndExtractChannels(camera);
                             if (!channels.isEmpty()) {
@@ -85,7 +79,7 @@ public class DeviceProber {
                             }
                         }
                     }
-                    
+
                     Logger.info("Completed processing camera: " + camera.getIpAddress());
                 } catch (Exception e) {
                     Logger.error("Failed to probe camera " + camera.getIpAddress(), e);
@@ -94,9 +88,9 @@ public class DeviceProber {
             });
             futures.add(future);
         }
-        
+
         executor.shutdown();
-        
+
         // Wait for all tasks to complete or cancellation
         for (Future<?> future : futures) {
             try {
@@ -110,7 +104,7 @@ public class DeviceProber {
                 }
             }
         }
-        
+
         // Now safely replace cameras with their channel expansions
         if (!cameraReplacements.isEmpty() && !cancelled) {
             Logger.info("Replacing " + cameraReplacements.size() + " cameras with multi-channel expansions");
@@ -125,9 +119,9 @@ public class DeviceProber {
             cameras.clear();
             cameras.addAll(newCameraList);
         }
-        
+
         Logger.info("Device probing completed. Total cameras: " + cameras.size());
-        
+
         // Notify completion or cancellation
         if (listener != null) {
             if (cancelled) {
@@ -137,14 +131,14 @@ public class DeviceProber {
             }
         }
     }
-    
+
     /**
      * Probe all cameras without progress listener (backward compatibility).
      */
     public static void probeAll(List<Camera> cameras, List<Credential> credentials) {
         probeAll(cameras, credentials, null);
     }
-    
+
     /**
      * Try all provided credentials until one works.
      */
@@ -155,42 +149,43 @@ public class DeviceProber {
             camera.setErrorMessage("No credentials provided");
             return false;
         }
-        
+
         for (int i = 0; i < credentials.size(); i++) {
             // Check for cancellation
             if (cancelled) {
                 return false;
             }
-            
+
             Credential cred = credentials.get(i);
-            
+
             // Validate individual credential
             if (cred.getUsername() == null || cred.getUsername().trim().isEmpty() ||
-                cred.getPassword() == null) {
+                    cred.getPassword() == null) {
                 Logger.info("Skipping invalid credential #" + (i + 1));
                 continue;
             }
-            
+
             Logger.info("Trying credential #" + (i + 1) + ": " + cred.getUsername());
-            
+
             // Update progress
             if (listener != null) {
-                listener.onProgress(camera.getIpAddress(), 0, 0, "Trying credential " + (i + 1) + "/" + credentials.size());
+                listener.onProgress(camera.getIpAddress(), 0, 0,
+                        "Trying credential " + (i + 1) + "/" + credentials.size());
             }
-            
+
             camera.setUsername(cred.getUsername());
             camera.setPassword(cred.getPassword());
-            
+
             boolean onvifSuccess = false;
             boolean onvifAttempted = false;
-            
+
             if (camera.getOnvifServiceUrl() != null) {
                 onvifAttempted = true;
                 Logger.info("Attempting ONVIF authentication...");
                 if (OnvifClient.authenticate(camera)) {
                     Logger.info("ONVIF auth succeeded with credential #" + (i + 1));
                     List<Camera> channelCameras = OnvifClient.fetchStreamUrlsMultiChannel(camera);
-                    
+
                     if (channelCameras.size() > 1) {
                         Logger.info("Found " + channelCameras.size() + " channels");
                         onvifSuccess = true;
@@ -211,7 +206,7 @@ public class DeviceProber {
                         camera.setMainStream(singleCamera.getMainStream());
                         camera.setSubStream(singleCamera.getSubStream());
                     }
-                    
+
                     if (onvifSuccess) {
                         Logger.info("SUCCESS: Credential #" + (i + 1) + " worked via ONVIF");
                         return true;
@@ -220,8 +215,9 @@ public class DeviceProber {
                     Logger.info("ONVIF auth failed with credential #" + (i + 1));
                 }
             }
-            
-            // Only try RTSP URL guessing if ONVIF was not attempted or failed without auth error
+
+            // Only try RTSP URL guessing if ONVIF was not attempted or failed without auth
+            // error
             if (!onvifAttempted && !camera.isAuthFailed()) {
                 Logger.info("ONVIF not available, trying RTSP URL patterns");
                 if (RtspUrlGuesser.tryGuessUrls(camera)) {
@@ -235,14 +231,14 @@ public class DeviceProber {
                     return true;
                 }
             }
-            
+
             // If auth failed, don't try more credentials
             if (camera.isAuthFailed()) {
                 Logger.info("Authentication failed - stopping credential rotation");
                 break;
             }
         }
-        
+
         // All credentials failed
         if (!camera.isAuthFailed()) {
             camera.setErrorMessage("All " + credentials.size() + " credential(s) failed");

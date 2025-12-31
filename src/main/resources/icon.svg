@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.1" />
+    </linearGradient>
+    
+    <linearGradient id="camGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#434343;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="lensGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e90ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="searchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ee5a6f;stop-opacity:1" />
+    </linearGradient>
+
+    <radialGradient id="glowEffect" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0" />
+    </radialGradient>
+
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.3"/>
+    </filter>
+
+    <filter id="innerShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <circle cx="200" cy="200" r="190" fill="url(#bgGrad)"/>
+
+  <!-- Network Grid Pattern -->
+  <g opacity="0.3" stroke="#00d4ff" stroke-width="1.5" fill="none">
+    <circle cx="200" cy="200" r="140"/>
+    <circle cx="200" cy="200" r="110"/>
+    <circle cx="200" cy="200" r="80"/>
+    <line x1="200" y1="60" x2="200" y2="340"/>
+    <line x1="60" y1="200" x2="340" y2="200"/>
+    <line x1="101" y1="101" x2="299" y2="299"/>
+    <line x1="299" y1="101" x2="101" y2="299"/>
+  </g>
+
+  <!-- Discovery Nodes -->
+  <g opacity="0.7">
+    <circle cx="200" cy="80" r="6" fill="#00d4ff"/>
+    <circle cx="280" cy="120" r="6" fill="#00d4ff"/>
+    <circle cx="320" cy="200" r="6" fill="#00d4ff"/>
+    <circle cx="280" cy="280" r="6" fill="#00d4ff"/>
+    <circle cx="200" cy="320" r="6" fill="#00d4ff"/>
+    <circle cx="120" cy="280" r="6" fill="#00d4ff"/>
+    <circle cx="80" cy="200" r="6" fill="#00d4ff"/>
+    <circle cx="120" cy="120" r="6" fill="#00d4ff"/>
+  </g>
+
+  <!-- PROMINENT CCTV CAMERA -->
+  <g filter="url(#shadow)">
+    <!-- Camera Mount Arm -->
+    <rect x="185" y="240" width="30" height="15" rx="3" fill="#2c2c2c"/>
+    <path d="M 200 255 L 190 275 L 210 275 Z" fill="#2c2c2c"/>
+    
+    <!-- Main Camera Housing - Bullet Style -->
+    <ellipse cx="200" cy="150" rx="55" ry="65" fill="url(#camGrad)"/>
+    <rect x="145" y="140" width="110" height="80" rx="8" fill="url(#camGrad)"/>
+    
+    <!-- Camera Top Highlight -->
+    <ellipse cx="200" cy="145" rx="45" ry="8" fill="#ffffff" opacity="0.1"/>
+    
+    <!-- Camera Side Panel -->
+    <rect x="250" y="150" width="20" height="60" rx="4" fill="#1a1a1a"/>
+    
+    <!-- Mounting Bracket -->
+    <rect x="145" y="190" width="10" height="30" rx="2" fill="#3a3a3a"/>
+    <circle cx="150" cy="195" r="4" fill="#555555"/>
+    <circle cx="150" cy="215" r="4" fill="#555555"/>
+    
+    <!-- Large Front Lens Housing -->
+    <circle cx="200" cy="175" r="50" fill="#1a1a1a"/>
+    <circle cx="200" cy="175" r="45" fill="#2c2c2c"/>
+    
+    <!-- Main Lens with Gradient -->
+    <circle cx="200" cy="175" r="40" fill="url(#lensGrad)"/>
+    <circle cx="200" cy="175" r="35" fill="#0066cc" opacity="0.9"/>
+    
+    <!-- Lens Layers (Depth) -->
+    <circle cx="200" cy="175" r="28" fill="#004999" opacity="0.8"/>
+    <circle cx="200" cy="175" r="20" fill="#003366"/>
+    <circle cx="200" cy="175" r="12" fill="#001a33"/>
+    
+    <!-- Lens Reflection/Shine -->
+    <ellipse cx="188" cy="162" rx="18" ry="22" fill="#ffffff" opacity="0.3"/>
+    <ellipse cx="210" cy="185" rx="10" ry="12" fill="#4da6ff" opacity="0.4"/>
+    
+    <!-- Glass Ring Detail -->
+    <circle cx="200" cy="175" r="42" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2"/>
+    
+    <!-- LED Status Light -->
+    <circle cx="165" cy="145" r="7" fill="#ff0000"/>
+    <circle cx="165" cy="145" r="5" fill="#ff3333"/>
+    <circle cx="165" cy="145" r="10" fill="url(#glowEffect)"/>
+    
+    <!-- Power Indicator -->
+    <circle cx="235" cy="145" r="5" fill="#00ff00"/>
+    <circle cx="235" cy="145" r="3" fill="#66ff66"/>
+    
+    <!-- Ventilation Slots -->
+    <g opacity="0.3">
+      <rect x="155" y="155" width="15" height="2" rx="1" fill="#666666"/>
+      <rect x="155" y="160" width="15" height="2" rx="1" fill="#666666"/>
+      <rect x="155" y="165" width="15" height="2" rx="1" fill="#666666"/>
+    </g>
+    
+    <!-- Brand Badge Area -->
+    <rect x="195" y="210" width="10" height="8" rx="1" fill="#1a1a1a"/>
+  </g>
+
+  <!-- PROMINENT SEARCH/MAGNIFYING GLASS ICON -->
+  <g transform="translate(280, 280)" filter="url(#shadow)">
+    <!-- Search Icon Background Circle -->
+    <circle cx="0" cy="0" r="50" fill="url(#searchGrad)"/>
+    <circle cx="0" cy="0" r="48" fill="#ff6b6b"/>
+    
+    <!-- Inner Shadow Effect -->
+    <circle cx="0" cy="0" r="48" fill="url(#searchGrad)" opacity="0.3"/>
+    
+    <!-- Magnifying Glass Circle -->
+    <circle cx="-5" cy="-5" r="22" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Magnifying Glass Handle -->
+    <line x1="13" y1="13" x2="28" y2="28" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+    
+    <!-- Inner Detail Lines (Search Scan) -->
+    <g opacity="0.6">
+      <line x1="-15" y1="-10" x2="5" y2="-10" stroke="#ffffff" stroke-width="2.5"/>
+      <line x1="-15" y1="-3" x2="5" y2="-3" stroke="#ffffff" stroke-width="2.5"/>
+      <line x1="-15" y1="4" x2="5" y2="4" stroke="#ffffff" stroke-width="2.5"/>
+    </g>
+    
+    <!-- Highlight on Glass -->
+    <path d="M -12 -15 Q -8 -17 -3 -16" stroke="#ffffff" stroke-width="2" opacity="0.5" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Connecting Arc from Camera to Search -->
+  <path d="M 250 200 Q 280 230 280 280" 
+        stroke="#00d4ff" 
+        stroke-width="3" 
+        fill="none" 
+        stroke-dasharray="8,4" 
+        opacity="0.5"/>
+
+  <!-- Corner Brackets (Frame) -->
+  <g stroke="#00d4ff" stroke-width="3.5" fill="none" opacity="0.4" stroke-linecap="round">
+    <path d="M 50 50 L 50 90 M 50 50 L 90 50"/>
+    <path d="M 350 50 L 350 90 M 350 50 L 310 50"/>
+    <path d="M 50 350 L 50 310 M 50 350 L 90 350"/>
+    <path d="M 350 350 L 350 310 M 350 350 L 310 350"/>
+  </g>
+
+  <!-- Subtle Outer Glow -->
+  <circle cx="200" cy="200" r="195" fill="none" stroke="url(#searchGrad)" stroke-width="2" opacity="0.2"/>
+</svg>

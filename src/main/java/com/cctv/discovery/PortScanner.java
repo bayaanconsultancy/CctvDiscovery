@@ -10,35 +10,41 @@ import java.util.concurrent.*;
 public class PortScanner {
     // Extended port list for better camera discovery
     private static final int[] PORTS = {
-        554, 8554,           // Standard RTSP
-        80, 8080, 8000,      // HTTP
-        443, 8443,           // HTTPS
-        5000, 5001,          // Synology NAS cameras
-        37777, 37778,        // Dahua proprietary
-        7447,                // Reolink
-        9000, 9001           // Custom/Generic
+            554, 8554, // Standard RTSP
+            80, 8080, 8000, // HTTP
+            443, 8443, // HTTPS
+            5000, 5001, // Synology NAS cameras
+            37777, 37778, // Dahua proprietary
+            7447, // Reolink
+            9000, 9001 // Custom/Generic
     };
     private static final int TIMEOUT_MS = 500;
-    
-    // Dynamic thread pool size based on available processors
-    private static final int THREAD_POOL_SIZE = Math.max(4, Math.min(Runtime.getRuntime().availableProcessors() * 2, 50));
 
-    public static List<Camera> scan(List<String> ipAddresses) {
+    // Dynamic thread pool size based on available processors
+    private static final int THREAD_POOL_SIZE = Math.max(4,
+            Math.min(Runtime.getRuntime().availableProcessors() * 2, 50));
+
+    public static List<Camera> scan(List<String> ipAddresses, ProgressListener listener) {
         Logger.info("Starting port scan for " + ipAddresses.size() + " IPs with " + THREAD_POOL_SIZE + " threads");
         Set<Camera> cameras = Collections.synchronizedSet(new HashSet<>());
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         final java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger(0);
-        
+
         // Add shutdown hook for graceful cleanup
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Logger.info("Shutdown detected, stopping port scanner...");
             executor.shutdownNow();
         }));
-        
+
+        // Total tasks is number of IPs
+        int totalTasks = ipAddresses.size();
+
         for (String ip : ipAddresses) {
             executor.submit(() -> {
                 try {
+                    // Update progress at start of IP scan? No, better to update on completion to
+                    // show progress bar moving
                     Camera camera = null;
                     List<Integer> rtspPorts = new ArrayList<>();
                     for (int port : PORTS) {
@@ -61,11 +67,14 @@ public class PortScanner {
                 } catch (Exception e) {
                     Logger.error("Error scanning " + ip, e);
                 } finally {
-                    completed.incrementAndGet();
+                    int current = completed.incrementAndGet();
+                    if (listener != null) {
+                        listener.onProgress(ip, current, totalTasks, "Scanned " + ip);
+                    }
                 }
             });
         }
-        
+
         executor.shutdown();
         try {
             if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
@@ -80,9 +89,19 @@ public class PortScanner {
             executor.shutdownNow();
             Thread.currentThread().interrupt();
         }
-        
+
+        if (listener != null) {
+            listener.onComplete();
+        }
+
         Logger.info("Port scan completed. Found " + cameras.size() + " cameras");
         return new ArrayList<>(cameras);
+    }
+
+    // Legacy method for backward compatibility if needed, though we should update
+    // callers
+    public static List<Camera> scan(List<String> ipAddresses) {
+        return scan(ipAddresses, null);
     }
 
     private static boolean isPortOpen(String ip, int port) {
