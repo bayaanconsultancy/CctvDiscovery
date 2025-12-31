@@ -1,0 +1,145 @@
+# Functional Requirements: CCTV Discovery Tool
+
+## 1. Project Overview
+- **Application Name**: CCTV Discovery
+- **Platform**: Windows (x64)
+- **Language**: Java 1.8
+- **Build System**: Apache Maven 3.x
+- **Key Dependencies**: JavaCV (FFmpeg), Apache POI (Excel), SLF4J, JUnit 5/Mockito.
+
+## 2. Discovery & Detection Module
+The application must discover IP cameras and NVR/DVR systems using three distinct methods:
+
+### 2.1 ONVIF Discovery
+- **Protocol**: WS-Discovery (UDP Multicast)
+- **Address**: `239.255.255.250`
+- **Port**: `3702`
+- **Timeout**: `3000 ms`
+- **Probe Payload**: Standard SOAP Probe for `dn:NetworkVideoTransmitter`.
+- **Response Parsing**: Extracts XAddrs (Service URL) and IP address.
+- **Priority**: Primary discovery method.
+
+### 2.2 Port Scanning
+- **Target**: Specific TCP ports frequently used by cameras and NVRs.
+- **Ports Scanned**:
+  - RTSP: `554`, `8554`
+  - HTTP: `80`, `8080`, `8000`
+  - HTTPS: `443`, `8443`
+  - Vendor Specific: `5000`, `5001` (Synology), `37777`, `37778` (Dahua), `7447` (Reolink), `9000`, `9001`.
+- **Concurrency**: Dynamic thread pool (size based on CPU cores, max 50 threads).
+- **Socket Timeout**: `500 ms` per port connection.
+- **Logic**: If port 80/8080 is found, constructs probable ONVIF URL (`/onvif/device_service`). If RTSP ports found, marks as candidate.
+
+### 2.3 Manufacturer Detection
+- **Detection Strategy (Priority Order)**:
+  1.  **ONVIF Data**: Reads `Manufacturer` field from `GetDeviceInformation` response.
+  2.  **MAC Address OUI**:
+      -   Performs `arp -a [IP]` command execution to retrieve device MAC address.
+      -   Matches first 3 octets (OUI) against internal database (`src/main/java/com/cctv/discovery/ManufacturerDetector.java`).
+      -   **Database**: Hikvision, Dahua (and sub-brands), Axis, TP-Link, Foscam, Reolink, Amcrest, Ubiquiti.
+  3.  **HTTP Headers**:
+      -   Sends `HEAD` request to HTTP ports (80, 8080, 443, 8000).
+      -   Analyzes `Server` and `WWW-Authenticate` headers for keywords (e.g., "Hikvision", "Dahua", "CP Plus", "Axis").
+- **Fallback**: Defaults to "Generic" if no match found.
+
+## 3. Authentication Module
+The application must attempt to authenticate with discovered devices to access streams and metadata.
+
+### 3.1 Credential Management
+- Supports list of credentials (Username/Password pairs).
+- **Rotation Logic**: Tries each credential pair sequentially until success or exhaustion.
+- **Validation**: Skips empty credentials.
+
+### 3.2 Authentication Modes
+- Supports and attempts three authentication types in order:
+  1.  **Digest Authentication** (Standard ONVIF)
+  2.  **Plain Text** (Weak/Legacy)
+  3.  **None/Anonymous** (Public streams)
+- **Error Handling**: Handles 401/403 errors by proceeding to next method/credential. 400 Bad Request triggers fallback.
+
+### 3.3 Information Retrieval
+- **ONVIF Services**:
+  - `GetDeviceInformation`: Manufacturer, Model, Serial, Firmware.
+  - `GetHostname` / `GetScopes`: Device Name.
+  - `GetSystemDateAndTime`: Calculates time drift from local system time.
+
+## 4. Stream Analysis & NVR Support
+The application must identify and validate RTSP video streams.
+
+### 4.1 NVR/DVR Channel Extraction
+- **Method**: ONVIF `GetProfiles` via `Media Service`.
+- **Logic**:
+  - Detects multiple profiles (Main/Sub streams).
+  - Extracts channel numbers from profile names (e.g., "Channel01", "Profile_1", "Ch-1").
+  - **Expansion**: Explodes a single NVR IP into multiple "Camera" objects, one per channel.
+
+### 4.2 Stream Discovery
+- **Primary Method**: ONVIF `GetStreamUri` (RTSP, Unicast, TCP).
+- **Secondary Method (Fallback)**: **RTSP URL Guessing**.
+  - Triggered if ONVIF fails or returns no stream.
+  - **Pattern Source**:
+    1.  `rtsp-patterns.txt` (External configuration file).
+    2.  Hardcoded Patterns (Internal Map based on Manufacturer).
+    3.  Generic Fallback Patterns (`/live/main`, `/stream1`, etc.).
+  - **Pattern Features**: Supports format strings for channel numbers (e.g., `/user/channel%d`).
+  - **Execution**: Parallel execution (Thread pool) for fast guessing.
+  - **Validation**: Attempts to connect to guessed URL using FFmpeg (2s timeout).
+
+### 4.3 Stream Probing (Verification)
+- **Tool**: JavaCV / FFmpeg (`FFmpegFrameGrabber`).
+- **Transport**: TCP (`rtsp_transport=tcp`).
+- **Timeout**: `10 seconds` (10,000 ms).
+- **Metrics Collected**:
+  - Video Codec (e.g., h264, hevc).
+  - Resolution (Width x Height).
+  - Bitrate (Calculated or reported).
+  - Frame Rate (FPS).
+- **Error Reporting**: Categorizes errors (Auth Failure, Connection Refused, Timeout, Not Found).
+
+## 5. User Interface & Reporting
+- **GUI**: Swing-based, Wizard style.
+- **Progress Tracking**: Real-time progress bars for Discovery, Auth, and Probing phases.
+- **Cancellation**: Support for stopping operations mid-process (Graceful shutdown).
+- **Export**:
+  - **Format**: valid `.xlsx` file.
+  - **Library**: Apache POI.
+  - **Columns**: IP, MAC, Manufacturer, Model, Name, Serial, Firmware, Time Diff, Credentials, Main RTSP (URL, Res, Codec, Bitrate, FPS), Sub RTSP (URL, Res, Codec, Bitrate, FPS), Error.
+  - **Styling**: Bold headers, frozen top row, monospaced font for technical data.
+
+## 6. Build & Deployment Requirements
+- **JDK**: Java 8 compatible.
+- **Packaging**:
+  - `maven-assembly-plugin`: Creates fat JAR (`jar-with-dependencies`).
+  - `launch4j-maven-plugin`: Wraps JAR into Windows EXE (`CctvDiscovery.exe`) with icon.
+  - `maven-resources-plugin`: Bundles local JRE (`jre8` folder) for portability.
+  - `maven-antrun-plugin`: Creates distribution ZIP containing EXE, JRE, and `rtsp-patterns.txt`.
+- **Code Signing**:
+  - Uses PowerShell to generate Self-Signed Certificate (`cert.pfx`).
+  - Uses `signtool` to sign the executable (Timestamped).
+
+## 7. Configuration Files
+- **`rtsp-patterns.txt`**: Text file for custom RTSP URL patterns.
+  - Format per line: `main_stream_path, sub_stream_path`
+  - Comments supported with `#`.
+  - Section headers supported (e.g. `# Hikvision`) to associate patterns with manufacturers.
+
+## 8. User Experience & Non-Technical Overview
+This section describes the application's behavior from a user's perspective, focusing on "what" it does rather than "how".
+
+### 8.1 Core Purpose
+The tool is designed to help technicians and security integrators quickly audit a network for CCTV cameras, identifying what devices are present, whether they are accessible, and if their video streams are configured correctly.
+
+### 8.2 Operational Flow
+1.  **Launch**: The user runs the application directly (portable) without needing to install specific drivers.
+2.  **Scan**: The user starts a discovery process. The tool automatically searches the local network for devices.
+3.  **Identify**: It identifies the brand and model of cameras (e.g., Hikvision, Dahua) and distinguishes between individual cameras and recording boxes (NVRs).
+4.  **Access**: The user provides a list of common passwords. The tool automatically tries these passwords on every found camera to see which ones work.
+5.  **Analyze**: For every accessible camera, the tool checks the video feed to report its clarity (resolution), format, and smoothness, verifying that the main high-quality stream and the lower-quality sub-stream are both working.
+6.  **Report**: The final result is a professional Excel spreadsheet listing every device, its IP address, the password that worked, and the technical details of the video quality, ready for documentation or troubleshooting.
+
+### 8.3 Key Usability Features
+-   **No Setup Required**: Works out-of-the-box on Windows.
+-   **Visual Feedback**: Shows a progress bar so the user knows the tool is working and hasn't frozen.
+-   **Graceful Stop**: The user can cancel the scan at any time if it's taking too long.
+-   **Intelligent NVR Handling**: If an NVR is found, the tool doesn't just list the NVR; it lists every single camera channel connected to it individually.
+-   **Error Clarity**: If a camera fails to connect, the tool tells the user why (e.g., "Wrong Password" vs "Device Offline") in simple terms.
