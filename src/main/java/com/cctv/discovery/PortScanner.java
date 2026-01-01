@@ -54,6 +54,14 @@ public class PortScanner {
                             }
                             if (port == 554 || port == 8554) {
                                 rtspPorts.add(port);
+                                // Early MAC detection for RTSP-enabled devices
+                                if (camera.getMacAddress() == null) {
+                                    String mac = ManufacturerDetector.getMacAddressFromArp(ip);
+                                    if (mac != null) {
+                                        camera.setMacAddress(mac);
+                                        Logger.info("Early MAC detection for " + ip + ": " + mac);
+                                    }
+                                }
                             } else if (port == 80 || port == 8080) {
                                 camera.setOnvifServiceUrl("http://" + ip + ":" + port + "/onvif/device_service");
                             }

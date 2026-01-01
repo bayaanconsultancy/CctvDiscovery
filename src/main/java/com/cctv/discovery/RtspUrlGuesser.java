@@ -96,10 +96,10 @@ public class RtspUrlGuesser {
 
     private static void loadExternalPatterns() {
         try {
-            File file = new File("rtsp-patterns.txt");
+            File file = new File("rtsp-urls.txt");
             if (!file.exists()) {
                 // Try checks in dist folder if running from IDE or built structure
-                File distFile = new File("dist/rtsp-patterns.txt");
+                File distFile = new File("dist/rtsp-urls.txt");
                 if (distFile.exists())
                     file = distFile;
             }
@@ -155,10 +155,10 @@ public class RtspUrlGuesser {
                 fileLoaded = true;
                 Logger.info("Successfully loaded RTSP patterns from file.");
             } else {
-                Logger.info("rtsp-patterns.txt not found, using hardcoded defaults.");
+                Logger.info("rtsp-urls.txt not found, using hardcoded defaults.");
             }
         } catch (Exception e) {
-            Logger.error("Error loading rtsp-patterns.txt", e);
+            Logger.error("Error loading rtsp-urls.txt", e);
         }
     }
 
@@ -228,8 +228,8 @@ public class RtspUrlGuesser {
             }
         }
 
-        // Get patterns (File > Hardcoded)
-        List<String[]> patterns = getPatternsForManufacturer(manufacturer);
+        // Get patterns with MAC-based priority logic
+        List<String[]> patterns = getPatternsForManufacturer(camera, manufacturer);
 
         Logger.info("Testing " + patterns.size() + " patterns for " + manufacturer + " on ports: " + ports);
 
@@ -241,7 +241,7 @@ public class RtspUrlGuesser {
         // Fallback to Generic if specific failed
         if (!manufacturer.equals("Generic")) {
             Logger.info("Manufacturer patterns failed, trying generic patterns");
-            List<String[]> genericPatterns = getPatternsForManufacturer("Generic");
+            List<String[]> genericPatterns = getPatternsForManufacturer(camera, "Generic");
             if (tryPatternsParallel(camera, genericPatterns, ports, cacheKey)) {
                 return true;
             }
@@ -253,9 +253,31 @@ public class RtspUrlGuesser {
     }
 
     /**
-     * Get patterns: Prefer File, then Hardcoded.
+     * Get patterns with MAC-based priority: MAC-detected manufacturers use hardcoded only,
+     * others use File -> Hardcoded -> Generic fallback.
      */
-    private static List<String[]> getPatternsForManufacturer(String manufacturer) {
+    private static List<String[]> getPatternsForManufacturer(Camera camera, String manufacturer) {
+        // Check if manufacturer was detected via MAC address
+        if (camera.getMacAddress() != null) {
+            String macManufacturer = ManufacturerDetector.getManufacturerFromMac(camera.getMacAddress());
+            if (macManufacturer != null && macManufacturer.equals(manufacturer)) {
+                Logger.info("Using hardcoded patterns only for MAC-detected manufacturer: " + manufacturer);
+                // Use ONLY hardcoded patterns for MAC-detected manufacturers
+                if (HARDCODED_PATTERNS.containsKey(manufacturer)) {
+                    return HARDCODED_PATTERNS.get(manufacturer);
+                }
+                return HARDCODED_PATTERNS.get("Generic");
+            }
+        }
+        
+        // For non-MAC detected devices: File -> Hardcoded -> Generic
+        return getPatternsForManufacturerFallback(manufacturer);
+    }
+    
+    /**
+     * Original pattern selection logic: File -> Hardcoded -> Generic.
+     */
+    private static List<String[]> getPatternsForManufacturerFallback(String manufacturer) {
         // 1. Try File Patterns
         if (fileLoaded && FILE_PATTERNS.containsKey(manufacturer)) {
             return FILE_PATTERNS.get(manufacturer);

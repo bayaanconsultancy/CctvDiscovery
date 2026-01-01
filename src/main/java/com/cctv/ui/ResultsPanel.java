@@ -93,7 +93,7 @@ public class ResultsPanel extends JPanel {
     private JPanel createResultsTable(List<Camera> cameras, Boolean successFilter) {
         JPanel panel = new JPanel(new BorderLayout());
 
-        String[] columns = { "Status", "IP Address", "Main Stream", "Sub Stream", "Manufacturer", "Model" };
+        String[] columns = { "Status", "IP Address", "MAC Address", "Main Stream", "Sub Stream", "Manufacturer", "Model" };
         DefaultTableModel tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -114,10 +114,11 @@ public class ResultsPanel extends JPanel {
             String status = (camera.getMainStream() != null || camera.getSubStream() != null) ? "Success" : "Failed";
             String mainUrl = camera.getMainStream() != null ? camera.getMainStream().getRtspUrl() : "N/A";
             String subUrl = camera.getSubStream() != null ? camera.getSubStream().getRtspUrl() : "N/A";
+            String macAddress = camera.getMacAddress() != null ? camera.getMacAddress() : "Unknown";
             String manufacturer = camera.getManufacturer() != null ? camera.getManufacturer() : "Unknown";
             String model = camera.getModel() != null ? camera.getModel() : "Unknown";
 
-            tableModel.addRow(new Object[] { status, camera.getIpAddress(), mainUrl, subUrl, manufacturer, model });
+            tableModel.addRow(new Object[] { status, camera.getIpAddress(), macAddress, mainUrl, subUrl, manufacturer, model });
         }
 
         JTable table = new JTable(tableModel);
@@ -172,10 +173,11 @@ public class ResultsPanel extends JPanel {
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
         table.getColumnModel().getColumn(1).setPreferredWidth(120);
-        table.getColumnModel().getColumn(2).setPreferredWidth(300);
-        table.getColumnModel().getColumn(3).setPreferredWidth(300);
-        table.getColumnModel().getColumn(4).setPreferredWidth(100);
+        table.getColumnModel().getColumn(2).setPreferredWidth(140);
+        table.getColumnModel().getColumn(3).setPreferredWidth(280);
+        table.getColumnModel().getColumn(4).setPreferredWidth(280);
         table.getColumnModel().getColumn(5).setPreferredWidth(100);
+        table.getColumnModel().getColumn(6).setPreferredWidth(100);
 
         JScrollPane scrollPane = new JScrollPane(table);
         panel.add(scrollPane, BorderLayout.CENTER);

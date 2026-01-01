@@ -74,7 +74,7 @@ mvn clean package
 ## Configuration
 
 ### Custom RTSP Patterns
-Create `rtsp-patterns.txt` in the application directory to add custom URL patterns:
+Create `rtsp-urls.txt` in the application directory to add custom URL patterns:
 
 ```
 # Custom RTSP patterns

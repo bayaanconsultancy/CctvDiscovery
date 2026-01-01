@@ -113,6 +113,7 @@ public class ManufacturerDetector {
 
     /**
      * Get Manufacturer name from MAC Address string.
+     * Public method for use by RtspUrlGuesser pattern selection.
      */
     public static String getManufacturerFromMac(String macAddress) {
         if (macAddress == null || macAddress.length() < 8)

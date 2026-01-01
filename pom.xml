@@ -27,6 +27,7 @@
         <mockito.version>5.8.0</mockito.version>
         <cert.filename>${project.build.directory}/certificate.pfx</cert.filename>
         <cert.password>${env.USERNAME}-${project.version}</cert.password>
+        <executable.name>CctvDiscovery.exe</executable.name>
     </properties>
 
     <dependencies>
@@ -171,7 +172,7 @@
                         <configuration>
                             <headerType>gui</headerType>
                             <jar>${project.build.directory}/${project.artifactId}-${project.version}-jar-with-dependencies.jar</jar>
-                            <outfile>${project.build.directory}/CctvDiscovery.exe</outfile>
+                            <outfile>${project.build.directory}/${executable.name}</outfile>
                             <errTitle>CCTV Discovery</errTitle>
                             <icon>src/main/resources/icon.ico</icon>
                             <classPath>
@@ -193,7 +194,7 @@
                                 <txtProductVersion>1.0.0</txtProductVersion>
                                 <productName>CCTV Discovery</productName>
                                 <internalName>CctvDiscovery</internalName>
-                                <originalFilename>CctvDiscovery.exe</originalFilename>
+                                <originalFilename>${executable.name}</originalFilename>
                             </versionInfo>
                         </configuration>
                     </execution>
@@ -223,7 +224,7 @@
                                 <argument>SHA256</argument>
                                 <argument>/t</argument>
                                 <argument>http://timestamp.digicert.com</argument>
-                                <argument>${project.build.directory}\CctvDiscovery.exe</argument>
+                                <argument>${project.build.directory}\${executable.name}</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -289,8 +290,8 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/CctvDiscovery.exe" todir="${project.build.directory}/dist"/>
-                                <copy file="${project.basedir}/rtsp-patterns.txt" todir="${project.build.directory}/dist"/>
+                                <copy file="${project.build.directory}/${executable.name}" todir="${project.build.directory}/dist"/>
+                                <copy file="${project.basedir}/rtsp-urls.txt" todir="${project.build.directory}/dist"/>
                             </target>
                         </configuration>
                     </execution>
