@@ -35,7 +35,7 @@ The application must discover IP cameras and NVR/DVR systems using three distinc
   1.  **ONVIF Data**: Reads `Manufacturer` field from `GetDeviceInformation` response.
   2.  **MAC Address OUI**:
       -   Performs `arp -a [IP]` command execution to retrieve device MAC address.
-      -   Matches first 3 octets (OUI) against internal database (`src/main/java/com/cctv/discovery/ManufacturerDetector.java`).
+      -   Matches first 3 octets (OUI) against internal database.
       -   **Database**: Hikvision, Dahua (and sub-brands), Axis, TP-Link, Foscam, Reolink, Amcrest, Ubiquiti.
   3.  **HTTP Headers**:
       -   Sends `HEAD` request to HTTP ports (80, 8080, 443, 8000).
