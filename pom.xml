@@ -25,6 +25,7 @@
         <slf4j.version>2.0.9</slf4j.version>
         <junit.version>5.10.1</junit.version>
         <mockito.version>5.8.0</mockito.version>
+        <cert.filename>${project.build.directory}/certificate.pfx</cert.filename>
         <cert.password>${env.USERNAME}-${project.version}</cert.password>
     </properties>
 
@@ -204,26 +205,6 @@
                 <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>create-certificate</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>powershell</executable>
-                            <arguments>
-                                <argument>-Command</argument>
-                                <argument>
-                                    if (-not (Test-Path "${project.build.directory}\cert.pfx")) {
-                                        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=CSON, OU=ON, O=Consultancy Services Ltd., L=Kolkata, S=West Bengal, C=IN' -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation Cert:\CurrentUser\My;
-                                        $pwd = ConvertTo-SecureString -String '${cert.password}' -Force -AsPlainText;
-                                        Export-PfxCertificate -Cert $cert -FilePath "${project.build.directory}\cert.pfx" -Password $pwd -ChainOption BuildChain
-                                    }
-                                </argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>sign-executable</id>
                         <phase>package</phase>
                         <goals>
@@ -235,7 +216,7 @@
                             <arguments>
                                 <argument>sign</argument>
                                 <argument>/f</argument>
-                                <argument>${project.build.directory}\cert.pfx</argument>
+                                <argument>${cert.filename}</argument>
                                 <argument>/p</argument>
                                 <argument>${cert.password}</argument>
                                 <argument>/fd</argument>
@@ -244,6 +225,31 @@
                                 <argument>http://timestamp.digicert.com</argument>
                                 <argument>${project.build.directory}\CctvDiscovery.exe</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>keytool-maven-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>create-certificate</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <configuration>
+                            <keystore>${cert.filename}</keystore>
+                            <storepass>${cert.password}</storepass>
+                            <storetype>PKCS12</storetype>
+                            <alias>cctv-discovery</alias>
+                            <dname>CN=CSON, OU=ON, O=Consultancy Services Ltd., L=Kolkata, S=West Bengal, C=IN</dname>
+                            <keyalg>RSA</keyalg>
+                            <keysize>2048</keysize>
+                            <validity>365</validity>
+                            <ext>eku=codeSigning</ext>
                         </configuration>
                     </execution>
                 </executions>

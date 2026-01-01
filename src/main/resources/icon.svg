@@ -7,8 +7,8 @@
     </linearGradient>
     
     <linearGradient id="camGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#434343;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#f5f5dc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8e0d5;stop-opacity:1" />
     </linearGradient>
     
     <linearGradient id="lensGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -46,53 +46,53 @@
   <!-- Background -->
   <circle cx="200" cy="200" r="190" fill="url(#bgGrad)"/>
 
-  <!-- Network Grid Pattern -->
-  <g opacity="0.3" stroke="#00d4ff" stroke-width="1.5" fill="none">
-    <circle cx="200" cy="200" r="140"/>
-    <circle cx="200" cy="200" r="110"/>
-    <circle cx="200" cy="200" r="80"/>
-    <line x1="200" y1="60" x2="200" y2="340"/>
-    <line x1="60" y1="200" x2="340" y2="200"/>
-    <line x1="101" y1="101" x2="299" y2="299"/>
-    <line x1="299" y1="101" x2="101" y2="299"/>
+  <!-- Network Grid Pattern - THICK COLORFUL LINES -->
+  <g stroke-width="5" fill="none" opacity="0.7">
+    <circle cx="200" cy="200" r="140" stroke="#ff0000"/>
+    <circle cx="200" cy="200" r="110" stroke="#ffd700"/>
+    <circle cx="200" cy="200" r="80" stroke="#ff00ff"/>
+    <line x1="200" y1="60" x2="200" y2="340" stroke="#ff0000" stroke-width="4"/>
+    <line x1="60" y1="200" x2="340" y2="200" stroke="#ffd700" stroke-width="4"/>
+    <line x1="101" y1="101" x2="299" y2="299" stroke="#ff00ff" stroke-width="4"/>
+    <line x1="299" y1="101" x2="101" y2="299" stroke="#ff6b6b" stroke-width="4"/>
   </g>
 
-  <!-- Discovery Nodes -->
-  <g opacity="0.7">
-    <circle cx="200" cy="80" r="6" fill="#00d4ff"/>
-    <circle cx="280" cy="120" r="6" fill="#00d4ff"/>
-    <circle cx="320" cy="200" r="6" fill="#00d4ff"/>
-    <circle cx="280" cy="280" r="6" fill="#00d4ff"/>
-    <circle cx="200" cy="320" r="6" fill="#00d4ff"/>
-    <circle cx="120" cy="280" r="6" fill="#00d4ff"/>
-    <circle cx="80" cy="200" r="6" fill="#00d4ff"/>
-    <circle cx="120" cy="120" r="6" fill="#00d4ff"/>
+  <!-- Discovery Nodes - LARGER AND COLORFUL -->
+  <g>
+    <circle cx="200" cy="80" r="10" fill="#ff0000"/>
+    <circle cx="280" cy="120" r="10" fill="#ffd700"/>
+    <circle cx="320" cy="200" r="10" fill="#ff00ff"/>
+    <circle cx="280" cy="280" r="10" fill="#ff0000"/>
+    <circle cx="200" cy="320" r="10" fill="#ffd700"/>
+    <circle cx="120" cy="280" r="10" fill="#ff00ff"/>
+    <circle cx="80" cy="200" r="10" fill="#ff6b6b"/>
+    <circle cx="120" cy="120" r="10" fill="#ff0000"/>
   </g>
 
-  <!-- PROMINENT CCTV CAMERA -->
+  <!-- PROMINENT CCTV CAMERA - WHITE/SAND COLOR -->
   <g filter="url(#shadow)">
     <!-- Camera Mount Arm -->
-    <rect x="185" y="240" width="30" height="15" rx="3" fill="#2c2c2c"/>
-    <path d="M 200 255 L 190 275 L 210 275 Z" fill="#2c2c2c"/>
+    <rect x="185" y="240" width="30" height="15" rx="3" fill="#d4cdc3"/>
+    <path d="M 200 255 L 190 275 L 210 275 Z" fill="#d4cdc3"/>
     
-    <!-- Main Camera Housing - Bullet Style -->
+    <!-- Main Camera Housing - Bullet Style in White/Sand -->
     <ellipse cx="200" cy="150" rx="55" ry="65" fill="url(#camGrad)"/>
     <rect x="145" y="140" width="110" height="80" rx="8" fill="url(#camGrad)"/>
     
     <!-- Camera Top Highlight -->
-    <ellipse cx="200" cy="145" rx="45" ry="8" fill="#ffffff" opacity="0.1"/>
+    <ellipse cx="200" cy="145" rx="45" ry="8" fill="#ffffff" opacity="0.3"/>
     
     <!-- Camera Side Panel -->
-    <rect x="250" y="150" width="20" height="60" rx="4" fill="#1a1a1a"/>
+    <rect x="250" y="150" width="20" height="60" rx="4" fill="#e0d8cc"/>
     
     <!-- Mounting Bracket -->
-    <rect x="145" y="190" width="10" height="30" rx="2" fill="#3a3a3a"/>
-    <circle cx="150" cy="195" r="4" fill="#555555"/>
-    <circle cx="150" cy="215" r="4" fill="#555555"/>
+    <rect x="145" y="190" width="10" height="30" rx="2" fill="#c4b9a8"/>
+    <circle cx="150" cy="195" r="4" fill="#b0a596"/>
+    <circle cx="150" cy="215" r="4" fill="#b0a596"/>
     
     <!-- Large Front Lens Housing -->
-    <circle cx="200" cy="175" r="50" fill="#1a1a1a"/>
-    <circle cx="200" cy="175" r="45" fill="#2c2c2c"/>
+    <circle cx="200" cy="175" r="50" fill="#c9c1b5"/>
+    <circle cx="200" cy="175" r="45" fill="#d9d2c6"/>
     
     <!-- Main Lens with Gradient -->
     <circle cx="200" cy="175" r="40" fill="url(#lensGrad)"/>
@@ -108,7 +108,7 @@
     <ellipse cx="210" cy="185" rx="10" ry="12" fill="#4da6ff" opacity="0.4"/>
     
     <!-- Glass Ring Detail -->
-    <circle cx="200" cy="175" r="42" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2"/>
+    <circle cx="200" cy="175" r="42" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.3"/>
     
     <!-- LED Status Light -->
     <circle cx="165" cy="145" r="7" fill="#ff0000"/>
@@ -120,14 +120,17 @@
     <circle cx="235" cy="145" r="3" fill="#66ff66"/>
     
     <!-- Ventilation Slots -->
-    <g opacity="0.3">
-      <rect x="155" y="155" width="15" height="2" rx="1" fill="#666666"/>
-      <rect x="155" y="160" width="15" height="2" rx="1" fill="#666666"/>
-      <rect x="155" y="165" width="15" height="2" rx="1" fill="#666666"/>
+    <g opacity="0.4">
+      <rect x="155" y="155" width="15" height="2" rx="1" fill="#9a9183"/>
+      <rect x="155" y="160" width="15" height="2" rx="1" fill="#9a9183"/>
+      <rect x="155" y="165" width="15" height="2" rx="1" fill="#9a9183"/>
     </g>
     
     <!-- Brand Badge Area -->
-    <rect x="195" y="210" width="10" height="8" rx="1" fill="#1a1a1a"/>
+    <rect x="195" y="210" width="10" height="8" rx="1" fill="#c4b9a8"/>
+    
+    <!-- Shadow detail for depth -->
+    <ellipse cx="200" cy="218" rx="50" ry="6" fill="#000000" opacity="0.1"/>
   </g>
 
   <!-- PROMINENT SEARCH/MAGNIFYING GLASS ICON -->
@@ -156,22 +159,31 @@
     <path d="M -12 -15 Q -8 -17 -3 -16" stroke="#ffffff" stroke-width="2" opacity="0.5" fill="none" stroke-linecap="round"/>
   </g>
 
-  <!-- Connecting Arc from Camera to Search -->
+  <!-- Connecting Arc from Camera to Search - THICK AND COLORFUL -->
   <path d="M 250 200 Q 280 230 280 280" 
-        stroke="#00d4ff" 
-        stroke-width="3" 
+        stroke="#ff0000" 
+        stroke-width="6" 
         fill="none" 
-        stroke-dasharray="8,4" 
-        opacity="0.5"/>
+        opacity="0.8"/>
+  <path d="M 248 202 Q 278 232 278 282" 
+        stroke="#ffd700" 
+        stroke-width="6" 
+        fill="none" 
+        opacity="0.7"/>
+  <path d="M 252 198 Q 282 228 282 278" 
+        stroke="#ff00ff" 
+        stroke-width="6" 
+        fill="none" 
+        opacity="0.7"/>
 
-  <!-- Corner Brackets (Frame) -->
-  <g stroke="#00d4ff" stroke-width="3.5" fill="none" opacity="0.4" stroke-linecap="round">
-    <path d="M 50 50 L 50 90 M 50 50 L 90 50"/>
-    <path d="M 350 50 L 350 90 M 350 50 L 310 50"/>
-    <path d="M 50 350 L 50 310 M 50 350 L 90 350"/>
-    <path d="M 350 350 L 350 310 M 350 350 L 310 350"/>
+  <!-- Corner Brackets (Frame) - THICK AND COLORFUL -->
+  <g stroke-width="6" fill="none" stroke-linecap="round">
+    <path d="M 50 50 L 50 90 M 50 50 L 90 50" stroke="#ff0000" opacity="0.8"/>
+    <path d="M 350 50 L 350 90 M 350 50 L 310 50" stroke="#ffd700" opacity="0.8"/>
+    <path d="M 50 350 L 50 310 M 50 350 L 90 350" stroke="#ff00ff" opacity="0.8"/>
+    <path d="M 350 350 L 350 310 M 350 350 L 310 350" stroke="#ff6b6b" opacity="0.8"/>
   </g>
 
-  <!-- Subtle Outer Glow -->
-  <circle cx="200" cy="200" r="195" fill="none" stroke="url(#searchGrad)" stroke-width="2" opacity="0.2"/>
+  <!-- Subtle Outer Glow - THICK -->
+  <circle cx="200" cy="200" r="195" fill="none" stroke="#ff00ff" stroke-width="4" opacity="0.3"/>
 </svg>

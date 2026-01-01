@@ -54,24 +54,24 @@ public class ResultsPanel extends JPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 12));
 
+        // All tab
+        JPanel allPanel = createResultsTable(cameras, null);
+        tabbedPane.addTab("All Cameras (" + cameras.size() + ")",
+                null, allPanel, "All discovered cameras");
+
         // Successful tab
         JPanel successPanel = createResultsTable(successfulCameras, true);
         tabbedPane.addTab("Successful (" + successfulCameras.size() + ")",
                 null, successPanel, "Cameras with discovered streams");
-        tabbedPane.setForegroundAt(0, new Color(40, 167, 69)); // Darker green for text
-        tabbedPane.setBackgroundAt(0, new Color(220, 255, 220)); // Light green background
+        tabbedPane.setForegroundAt(1, new Color(40, 167, 69)); // Darker green for text
+        tabbedPane.setBackgroundAt(1, new Color(220, 255, 220)); // Light green background
 
         // Failed tab
         JPanel failedPanel = createResultsTable(failedCameras, false);
         tabbedPane.addTab("Failed (" + failedCameras.size() + ")",
                 null, failedPanel, "Cameras that failed discovery");
-        tabbedPane.setForegroundAt(1, new Color(220, 53, 69)); // Red text
-        tabbedPane.setBackgroundAt(1, new Color(255, 220, 220)); // Light red background
-
-        // All tab
-        JPanel allPanel = createResultsTable(cameras, null);
-        tabbedPane.addTab("All Cameras (" + cameras.size() + ")",
-                null, allPanel, "All discovered cameras");
+        tabbedPane.setForegroundAt(2, new Color(220, 53, 69)); // Red text
+        tabbedPane.setBackgroundAt(2, new Color(255, 220, 220)); // Light red background
 
         add(tabbedPane, BorderLayout.CENTER);
 

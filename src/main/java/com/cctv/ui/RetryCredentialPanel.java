@@ -74,7 +74,7 @@ public class RetryCredentialPanel extends JPanel {
         });
         buttonPanel.add(skipButton);
 
-        JButton retryButton = createStyledButton("Retry", new Color(74, 144, 226), new Color(53, 122, 189));
+        JButton retryButton = createStyledButton("Retry", new Color(92, 184, 92), new Color(68, 157, 68));
         retryButton.addActionListener(e -> {
             if (table.isEditing()) {
                 table.getCellEditor().stopCellEditing();
