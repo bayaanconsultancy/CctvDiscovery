@@ -1,5 +1,6 @@
 package com.cctv.ui;
 
+import com.cctv.util.HelpManager;
 import javax.swing.*;
 import java.awt.*;
 
@@ -30,6 +31,14 @@ public class WelcomePanel extends JPanel {
         gbc.gridy = 2;
         gbc.insets = new Insets(30, 10, 10, 10);
         centerPanel.add(startButton, gbc);
+        
+        JButton helpButton = createStyledButton("Help", new Color(91, 192, 222), new Color(49, 176, 213));
+        helpButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        helpButton.setPreferredSize(new Dimension(100, 35));
+        helpButton.addActionListener(e -> HelpManager.openUserManual());
+        gbc.gridy = 3;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        centerPanel.add(helpButton, gbc);
         
         add(centerPanel, BorderLayout.CENTER);
     }

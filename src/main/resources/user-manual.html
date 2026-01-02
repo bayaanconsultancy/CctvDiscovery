@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTV Discovery Tool - User Manual</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2c3e50;
+            margin-top: 25px;
+        }
+        .screenshot {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+        }
+        .screenshot img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .screenshot-caption {
+            font-style: italic;
+            color: #666;
+            margin-top: 10px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning::before {
+            content: "⚠️ ";
+            font-weight: bold;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .info::before {
+            content: "ℹ️ ";
+            font-weight: bold;
+        }
+        .step {
+            background: #e8f5e8;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .step-number {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .method-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .method-title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .toc {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin: 5px 0;
+        }
+        .toc a {
+            text-decoration: none;
+            color: #3498db;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CCTV Discovery Tool</h1>
+        <p style="text-align: center; font-size: 18px; color: #666;">Professional IP Camera Discovery and Analysis Solution</p>
+        
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. Overview</a></li>
+                <li><a href="#installation">2. Installation & Setup</a></li>
+                <li><a href="#getting-started">3. Getting Started</a></li>
+                <li><a href="#discovery-wizard">4. Discovery Wizard</a></li>
+                <li><a href="#results-analysis">5. Results Analysis</a></li>
+                <li><a href="#export-features">6. Export Features</a></li>
+                <li><a href="#troubleshooting">7. Troubleshooting</a></li>
+                <li><a href="#advanced-features">8. Advanced Features</a></li>
+                <li><a href="#technical-specifications">9. Technical Specifications</a></li>
+            </ul>
+        </div>
+
+        <h2 id="overview">1. Overview</h2>
+        <p>The CCTV Discovery Tool is a comprehensive Windows application designed for security professionals, network administrators, and system integrators to discover, analyze, and document IP cameras and NVR/DVR systems on local networks.</p>
+        
+        <div class="screenshot">
+            <img src="manual-assets/main-interface.png" alt="Main Interface">
+            <div class="screenshot-caption">Main application interface showing the discovery wizard</div>
+        </div>
+
+        <h3>Key Features</h3>
+        <ul>
+            <li><strong>ONVIF Discovery:</strong> Automatic detection using WS-Discovery protocol</li>
+            <li><strong>Port Scanning:</strong> Comprehensive port scanning for non-ONVIF devices</li>
+            <li><strong>Multi-Channel NVR Support:</strong> Automatic extraction of individual camera channels</li>
+            <li><strong>Stream Analysis:</strong> Real-time video stream validation and analysis</li>
+            <li><strong>Professional Reporting:</strong> Excel export with detailed technical information</li>
+            <li><strong>MAC Address Detection:</strong> Hardware identification for better device recognition</li>
+        </ul>
+
+        <h2 id="installation">2. Installation & Setup</h2>
+        
+        <h3>System Requirements</h3>
+        <ul>
+            <li>Windows 10/11 (x64)</li>
+            <li>Minimum 4GB RAM</li>
+            <li>Network access to camera devices</li>
+        </ul>
+
+        <div class="step">
+            <span class="step-number">Step 1:</span> Extract the downloaded ZIP file to your desired location
+        </div>
+        
+        <div class="screenshot">
+            <img src="manual-assets/installation-extract.png" alt="Extract Installation">
+            <div class="screenshot-caption">Extracting the CCTV Discovery Tool installation package</div>
+        </div>
+
+        <div class="step">
+            <span class="step-number">Step 2:</span> Run <code>CctvDiscovery.exe</code> - No administrator privileges required
+        </div>
+
+        <div class="info">
+            The application is portable and requires no installation. All dependencies including Java Runtime Environment are bundled. Normal user privileges are sufficient for operation.
+        </div>
+
+        <h2 id="getting-started">3. Getting Started</h2>
+
+        <h3>First Launch</h3>
+        <p>When you first launch the application, you'll see the welcome screen with options to begin discovery.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/welcome-screen.png" alt="Welcome Screen">
+            <div class="screenshot-caption">Welcome screen with discovery options</div>
+        </div>
+
+        <h3>Network Interface Selection</h3>
+        <p>The tool provides multiple methods to specify the target network for camera discovery. Choose the method that best fits your network environment:</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/network-selection.png" alt="Network Selection">
+            <div class="screenshot-caption">Network interface selection dialog with multiple input methods</div>
+        </div>
+
+        <div class="method-box">
+            <div class="method-title">Method 1: Network Interface Selection</div>
+            <p><strong>When to use:</strong> When you want to scan the entire subnet of a specific network adapter.</p>
+            <p><strong>How it works:</strong> Select from available network interfaces (Ethernet, Wi-Fi, etc.). The tool automatically determines the subnet range.</p>
+            <p><strong>Example:</strong> Selecting "Ethernet" interface with IP 192.168.1.100 will scan 192.168.1.1-192.168.1.254</p>
+            <p><strong>Recommended for:</strong> Most common scenarios, office networks, home networks</p>
+            
+            <div class="screenshot">
+                <img src="manual-assets/network-interface-selection.png" alt="Network Interface Selection">
+                <div class="screenshot-caption">Network interface dropdown showing available adapters</div>
+            </div>
+        </div>
+
+        <div class="method-box">
+            <div class="method-title">Method 2: IP Range Input (Start-End)</div>
+            <p><strong>When to use:</strong> When you need to scan a specific range of IP addresses.</p>
+            <p><strong>Format:</strong> <code>192.168.1.100-192.168.1.150</code></p>
+            <p><strong>Example:</strong> <code>10.0.0.50-10.0.0.100</code> will scan 51 IP addresses</p>
+            <p><strong>Recommended for:</strong> Large networks, specific camera subnets, targeted scanning</p>
+            
+            <div class="screenshot">
+                <img src="manual-assets/ip-range-input.png" alt="IP Range Input">
+                <div class="screenshot-caption">IP range input fields for start and end addresses</div>
+            </div>
+        </div>
+
+        <div class="method-box">
+            <div class="method-title">Method 3: Single IP Address</div>
+            <p><strong>When to use:</strong> When you know the exact IP address of a specific camera.</p>
+            <p><strong>Format:</strong> <code>192.168.1.100</code> or enter same IP in both start and end fields</p>
+            <p><strong>Example:</strong> <code>10.0.0.50</code> will scan only that specific device</p>
+            <p><strong>Note:</strong> If using separate start/end IP input fields, enter the same IP address in both fields (e.g., Start: 192.168.1.100, End: 192.168.1.100)</p>
+            <p><strong>Recommended for:</strong> Testing specific cameras, troubleshooting individual devices</p>
+        </div>
+
+        <h3>Selection Recommendations</h3>
+        <table>
+            <tr>
+                <th>Scenario</th>
+                <th>Recommended Method</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>Office network scan</td>
+                <td>Network Interface</td>
+                <td>Select "Ethernet" adapter</td>
+            </tr>
+            <tr>
+                <td>Camera subnet only</td>
+                <td>IP Range</td>
+                <td>192.168.100.1-192.168.100.50</td>
+            </tr>
+            <tr>
+                <td>Single camera test</td>
+                <td>Single IP</td>
+                <td>192.168.1.100</td>
+            </tr>
+            <tr>
+                <td>Large enterprise</td>
+                <td>IP Range (segmented)</td>
+                <td>10.1.1.1-10.1.1.254</td>
+            </tr>
+        </table>
+
+        <div class="warning">
+            Ensure you select the correct network range that has access to your camera network. Incorrect selection will result in no devices being found. For large networks, consider scanning in smaller segments to improve performance.
+        </div>
+
+        <h2 id="discovery-wizard">4. Discovery Wizard</h2>
+
+        <h3>ONVIF Discovery Phase</h3>
+        <p>The tool first attempts to discover ONVIF-compliant devices using multicast discovery.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/onvif-discovery.png" alt="ONVIF Discovery">
+            <div class="screenshot-caption">ONVIF discovery in progress showing found devices</div>
+        </div>
+
+        <div class="info">
+            If ONVIF multicast discovery finds no devices, the tool automatically starts port scanning without user confirmation to ensure comprehensive device detection.
+        </div>
+
+        <div class="screenshot">
+            <img src="manual-assets/onvif-fallback-portscan.png" alt="ONVIF Fallback to Port Scan">
+            <div class="screenshot-caption">Automatic fallback to port scanning when no ONVIF devices are found</div>
+        </div>
+
+        <h3>Port Scanning Phase</h3>
+        <p>When ONVIF discovery finds limited or no devices, the tool performs comprehensive port scanning.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/port-scanning.png" alt="Port Scanning">
+            <div class="screenshot-caption">Port scanning progress with real-time device detection</div>
+        </div>
+
+        <h3>Credential Configuration</h3>
+        <p>Configure authentication credentials for discovered devices using the credential pool system.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/credential-setup.png" alt="Credential Setup">
+            <div class="screenshot-caption">Credential configuration panel with discovered devices and credential pool</div>
+        </div>
+
+        <h4>Understanding the Credential Pool System</h4>
+        <p>The credential configuration window is divided into two sections:</p>
+        
+        <div class="method-box">
+            <div class="method-title">Left Panel: Discovered Devices</div>
+            <p>Shows all discovered cameras with their IP addresses, manufacturers, and current status. This list is read-only and displays devices found during the discovery phase.</p>
+        </div>
+
+        <div class="method-box">
+            <div class="method-title">Right Panel: Credential Pool</div>
+            <p>Allows you to create multiple username/password combinations that will be tested against all discovered devices. This approach is necessary because:</p>
+            <ul>
+                <li><strong>Different manufacturers use different default credentials</strong> (admin/admin, admin/12345, admin/password, etc.)</li>
+                <li><strong>Network administrators may have changed default passwords</strong> to various custom combinations</li>
+                <li><strong>Mixed environments</strong> often contain cameras from multiple vendors with different credential requirements</li>
+                <li><strong>Efficiency:</strong> Testing multiple credentials automatically saves time compared to manual retry</li>
+            </ul>
+            <p><strong>How to use:</strong> Enter username and password, then click "Add to List" to build your credential pool. The tool will test each credential combination against every discovered device.</p>
+        </div>
+
+        <h3>Retry Mechanisms</h3>
+        <p>If authentication fails for any devices, the retry window automatically appears with advanced credential management options.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/retry-panel.png" alt="Retry Panel">
+            <div class="screenshot-caption">Retry credential panel for failed authentication devices</div>
+        </div>
+
+        <h4>Retry Window Features</h4>
+        <div class="method-box">
+            <div class="method-title">Individual Credential Assignment</div>
+            <p>Each failed device can be assigned specific credentials by editing the username and password fields directly in the table.</p>
+        </div>
+
+        <div class="method-box">
+            <div class="method-title">Bulk Credential Assignment</div>
+            <p>Use "Select All" to choose multiple devices, then "Set Credentials" to apply the same username/password combination to all selected devices. This feature is <strong>only available in the retry window</strong> for failed authentication devices.</p>
+        </div>
+
+        <div class="warning">
+            If authentication continues to fail after retry attempts, the retry window will reappear automatically until you either succeed or choose to skip the remaining failed devices. This ensures no device is left unprocessed without user acknowledgment.
+        </div>
+
+        <h3>Authentication & Stream Discovery</h3>
+        <p>The tool attempts authentication using the credential pool and discovers video streams for each device.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/authentication-progress.png" alt="Authentication Progress">
+            <div class="screenshot-caption">Authentication and stream discovery progress</div>
+        </div>
+
+        <h2 id="results-analysis">5. Results Analysis</h2>
+
+        <h3>Results Overview</h3>
+        <p>View comprehensive results with device information, stream details, and status.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/results-overview.png" alt="Results Overview">
+            <div class="screenshot-caption">Results panel showing discovered cameras with detailed information</div>
+        </div>
+
+        <h3>Device Information Display</h3>
+        <table>
+            <tr>
+                <th>Column</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td>Success/Failed indicator</td>
+            </tr>
+            <tr>
+                <td>IP Address</td>
+                <td>Device network address</td>
+            </tr>
+            <tr>
+                <td>MAC Address</td>
+                <td>Hardware MAC address for identification</td>
+            </tr>
+            <tr>
+                <td>Manufacturer</td>
+                <td>Detected camera manufacturer</td>
+            </tr>
+            <tr>
+                <td>Model</td>
+                <td>Camera model information</td>
+            </tr>
+            <tr>
+                <td>Main Stream</td>
+                <td>Primary RTSP stream URL</td>
+            </tr>
+            <tr>
+                <td>Sub Stream</td>
+                <td>Secondary RTSP stream URL</td>
+            </tr>
+        </table>
+
+        <h3>Filtered Views</h3>
+        <p>Use the tabbed interface to view different categories of results.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/filtered-results.png" alt="Filtered Results">
+            <div class="screenshot-caption">Tabbed results view showing successful, failed, and all devices</div>
+        </div>
+
+        <h2 id="export-features">6. Export Features</h2>
+
+        <h3>Excel Export</h3>
+        <p>Generate professional Excel reports with comprehensive device information.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/excel-export.png" alt="Excel Export">
+            <div class="screenshot-caption">Excel export dialog with file naming options</div>
+        </div>
+
+        <h3>Export Content</h3>
+        <p>The Excel export includes:</p>
+        <ul>
+            <li>Device identification (IP, MAC, Manufacturer, Model)</li>
+            <li>Authentication credentials (Username/Password)</li>
+            <li>Stream information (RTSP URLs, Resolution, Codec, Bitrate, FPS)</li>
+            <li>Technical details (Firmware, Serial Number, Time Difference)</li>
+            <li>Error information for failed devices</li>
+        </ul>
+
+        <div class="screenshot">
+            <img src="manual-assets/excel-sample.png" alt="Excel Sample">
+            <div class="screenshot-caption">Sample Excel export showing formatted camera data</div>
+        </div>
+
+        <div class="warning">
+            Excel files contain plaintext passwords. Store exported files securely and delete when no longer needed.
+        </div>
+
+        <h2 id="troubleshooting">7. Troubleshooting</h2>
+
+        <h3>Common Issues</h3>
+
+        <h4>No Cameras Found</h4>
+        <ul>
+            <li>Verify cameras are powered and network-connected</li>
+            <li>Check firewall settings (UDP 3702, TCP 554/8554)</li>
+            <li>Ensure correct network interface/range selection</li>
+            <li>Try port scanning as fallback method</li>
+        </ul>
+
+        <h4>Authentication Failures</h4>
+        <ul>
+            <li>Verify username/password combinations</li>
+            <li>Try common defaults: admin/admin, admin/12345, admin/[blank]</li>
+            <li>Check if ONVIF authentication is enabled on cameras</li>
+            <li>Review camera documentation for default credentials</li>
+        </ul>
+
+        <div class="screenshot">
+            <img src="manual-assets/error-dialog.png" alt="Error Dialog">
+            <div class="screenshot-caption">Error dialog showing authentication failure details</div>
+        </div>
+
+        <h4>Stream Analysis Failures</h4>
+        <ul>
+            <li>Ensure RTSP ports are not blocked</li>
+            <li>Verify camera supports RTSP streaming</li>
+            <li>Check camera connection limits</li>
+            <li>Add custom patterns for uncommon camera models</li>
+        </ul>
+
+        <h3>Log Files</h3>
+        <p>Application logs are written to timestamped files: <code>cctv-discovery-YYYYMMDDHHMMSS.log</code></p>
+
+        <div class="info">
+            Log files contain detailed information about discovery events, authentication attempts, and error messages for troubleshooting.
+        </div>
+
+        <h2 id="advanced-features">8. Advanced Features</h2>
+
+        <h3>Custom RTSP Patterns</h3>
+        <p>Add custom RTSP URL patterns by editing <code>rtsp-urls.txt</code>:</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/custom-patterns.png" alt="Custom Patterns">
+            <div class="screenshot-caption">Custom RTSP patterns configuration file</div>
+        </div>
+
+        <h3>NVR Channel Detection</h3>
+        <p>The tool automatically detects and extracts individual channels from NVR/DVR systems.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/nvr-channels.png" alt="NVR Channels">
+            <div class="screenshot-caption">NVR channel extraction showing individual camera feeds</div>
+        </div>
+
+        <h3>Retry Mechanisms</h3>
+        <p>For failed authentications, use the retry panel to attempt different credentials.</p>
+
+        <div class="screenshot">
+            <img src="manual-assets/retry-panel.png" alt="Retry Panel">
+            <div class="screenshot-caption">Retry credential panel for failed devices</div>
+        </div>
+
+        <h2 id="technical-specifications">9. Technical Specifications</h2>
+
+        <h3>Supported Manufacturers</h3>
+        <table>
+            <tr>
+                <th>Manufacturer</th>
+                <th>Detection Method</th>
+                <th>RTSP Patterns</th>
+            </tr>
+            <tr>
+                <td>Hikvision</td>
+                <td>ONVIF + MAC + HTTP</td>
+                <td>6 patterns</td>
+            </tr>
+            <tr>
+                <td>Dahua</td>
+                <td>ONVIF + MAC + HTTP</td>
+                <td>3 patterns</td>
+            </tr>
+            <tr>
+                <td>Axis</td>
+                <td>ONVIF + MAC + HTTP</td>
+                <td>2 patterns</td>
+            </tr>
+            <tr>
+                <td>TP-Link</td>
+                <td>MAC + HTTP</td>
+                <td>2 patterns</td>
+            </tr>
+            <tr>
+                <td>Generic</td>
+                <td>Port Scan</td>
+                <td>4 patterns</td>
+            </tr>
+        </table>
+
+        <h3>Network Protocols</h3>
+        <ul>
+            <li><strong>ONVIF:</strong> WS-Discovery (UDP 3702)</li>
+            <li><strong>RTSP:</strong> TCP 554, 8554</li>
+            <li><strong>HTTP:</strong> TCP 80, 8080, 8000</li>
+            <li><strong>HTTPS:</strong> TCP 443, 8443</li>
+        </ul>
+
+        <h3>Performance Specifications</h3>
+        <ul>
+            <li><strong>ONVIF Timeout:</strong> 3 seconds</li>
+            <li><strong>Port Scan Timeout:</strong> 500ms per port</li>
+            <li><strong>RTSP Test Timeout:</strong> 2 seconds</li>
+            <li><strong>Stream Analysis Timeout:</strong> 10 seconds</li>
+            <li><strong>Thread Pool:</strong> CPU cores × 2 (max 50)</li>
+        </ul>
+
+        <div class="info">
+            For technical support or feature requests, consult the application logs and this documentation. The tool provides comprehensive error messages to assist with troubleshooting.
+        </div>
+
+        <hr style="margin: 40px 0;">
+        <p style="text-align: center; color: #666; font-size: 14px;">
+            CCTV Discovery Tool - Professional IP Camera Discovery and Analysis Solution<br>
+            Version 1.0.0 | © 2025 Consultancy Services
+        </p>
+    </div>
+</body>
+</html>
