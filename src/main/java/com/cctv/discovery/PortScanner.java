@@ -70,6 +70,22 @@ public class PortScanner {
                     }
                     if (camera != null) {
                         camera.setOpenRtspPorts(rtspPorts);
+                        // Ensure MAC address is detected for all cameras
+                        if (camera.getMacAddress() == null) {
+                            String mac = ManufacturerDetector.getMacAddressFromArp(ip);
+                            if (mac != null) {
+                                camera.setMacAddress(mac);
+                                Logger.info("MAC detection for " + ip + ": " + mac);
+                                // Set manufacturer from MAC if not already set
+                                if (camera.getManufacturer() == null) {
+                                    String manufacturer = ManufacturerDetector.getManufacturerFromMac(mac);
+                                    if (manufacturer != null) {
+                                        camera.setManufacturer(manufacturer);
+                                        Logger.info("Manufacturer from MAC for " + ip + ": " + manufacturer);
+                                    }
+                                }
+                            }
+                        }
                         cameras.add(camera);
                     }
                 } catch (Exception e) {

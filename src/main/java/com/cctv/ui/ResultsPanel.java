@@ -2,6 +2,7 @@ package com.cctv.ui;
 
 import com.cctv.export.ExcelExporter;
 import com.cctv.model.Camera;
+import com.cctv.util.Logger;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -24,6 +25,11 @@ public class ResultsPanel extends JPanel {
         List<Camera> failedCameras = new ArrayList<>();
 
         for (Camera camera : cameras) {
+            // Debug logging to verify camera state
+            Logger.info("ResultsPanel - Camera " + camera.getIpAddress() + ": MainStream=" + 
+                       (camera.getMainStream() != null ? camera.getMainStream().getRtspUrl() : "null") + 
+                       ", SubStream=" + (camera.getSubStream() != null ? camera.getSubStream().getRtspUrl() : "null"));
+            
             if (camera.getMainStream() != null || camera.getSubStream() != null) {
                 successfulCameras.add(camera);
             } else if (!camera.isNvr()) {

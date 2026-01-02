@@ -5,8 +5,8 @@
 - **Platform**: Windows (x64)
 - **Language**: Java 1.8
 - **Build System**: Apache Maven 3.x
-- **Key Dependencies**: JavaCV (FFmpeg), Apache POI (Excel), SLF4J, JUnit 5/Mockito.
-- **Architecture**: Split responsibility design with separate components for pattern management, RTSP testing, caching, and discovery orchestration.
+- **Key Dependencies**: JavaCV (FFmpeg), Apache POI (Excel), SLF4J, JUnit 5/Mockito
+- **Architecture**: Split responsibility design with separate components for pattern management, RTSP testing, caching, and discovery orchestration
 
 ## 2. Discovery & Detection Module
 The application must discover IP cameras and NVR/DVR systems using three distinct methods:
@@ -16,89 +16,92 @@ The application must discover IP cameras and NVR/DVR systems using three distinc
 - **Address**: `239.255.255.250`
 - **Port**: `3702`
 - **Timeout**: `3000 ms`
-- **Probe Payload**: Standard SOAP Probe for `dn:NetworkVideoTransmitter`.
-- **Response Parsing**: Extracts XAddrs (Service URL) and IP address.
-- **Priority**: Primary discovery method.
+- **Probe Payload**: Standard SOAP Probe for `dn:NetworkVideoTransmitter`
+- **Response Parsing**: Extracts XAddrs (Service URL) and IP address
+- **Priority**: Primary discovery method
+- **Fallback**: Automatically starts port scanning if no ONVIF devices found
 
 ### 2.2 Port Scanning with Early MAC Detection
-- **Target**: Specific TCP ports frequently used by cameras and NVRs.
+- **Target**: Specific TCP ports frequently used by cameras and NVRs
 - **Ports Scanned**:
   - RTSP: `554`, `8554`
   - HTTP: `80`, `8080`, `8000`
   - HTTPS: `443`, `8443`
-  - Vendor Specific: `5000`, `5001` (Synology), `37777`, `37778` (Dahua), `7447` (Reolink), `9000`, `9001`.
-- **Early MAC Detection**: When RTSP ports (554, 8554) are found, immediately performs ARP lookup to detect MAC address for manufacturer identification.
-- **Concurrency**: Dynamic thread pool (size based on CPU cores, max 50 threads).
-- **Socket Timeout**: `500 ms` per port connection.
-- **Logic**: If port 80/8080 is found, constructs probable ONVIF URL (`/onvif/device_service`). If RTSP ports found, marks as candidate.
+  - Vendor Specific: `5000`, `5001` (Synology), `37777`, `37778` (Dahua), `7447` (Reolink), `9000`, `9001`
+- **Early MAC Detection**: When RTSP ports (554, 8554) are found, immediately performs ARP lookup to detect MAC address for manufacturer identification
+- **Concurrency**: Dynamic thread pool (size based on CPU cores, max 50 threads)
+- **Socket Timeout**: `500 ms` per port connection
+- **Logic**: If port 80/8080 is found, constructs probable ONVIF URL (`/onvif/device_service`). If RTSP ports found, marks as candidate
 
 ### 2.3 Manufacturer Detection
 - **Detection Strategy (Priority Order)**:
-  1.  **ONVIF Data**: Reads `Manufacturer` field from `GetDeviceInformation` response.
-  2.  **MAC Address OUI**:
-      -   Performs `arp -a [IP]` command execution to retrieve device MAC address.
-      -   Matches first 3 octets (OUI) against internal database.
-      -   **Database**: Hikvision, Dahua (and sub-brands), Axis, TP-Link, Foscam, Reolink, Amcrest, Ubiquiti.
-  3.  **HTTP Headers**:
-      -   Sends `HEAD` request to HTTP ports (80, 8080, 443, 8000).
-      -   Analyzes `Server` and `WWW-Authenticate` headers for keywords (e.g., "Hikvision", "Dahua", "CP Plus", "Axis").
-- **Fallback**: Defaults to "Generic" if no match found.
+  1. **ONVIF Data**: Reads `Manufacturer` field from `GetDeviceInformation` response
+  2. **MAC Address OUI**:
+     - Performs `arp -a [IP]` command execution to retrieve device MAC address
+     - Matches first 3 octets (OUI) against internal database
+     - **Database**: Hikvision, Dahua (and sub-brands), Axis, TP-Link, Foscam, Reolink, Amcrest, Ubiquiti, CP Plus
+  3. **HTTP Headers**:
+     - Sends `HEAD` request to HTTP ports (80, 8080, 443, 8000)
+     - Analyzes `Server` and `WWW-Authenticate` headers for keywords (e.g., "Hikvision", "Dahua", "CP Plus", "Axis")
+- **Fallback**: Defaults to "Generic" if no match found
 
 ## 3. Authentication Module
 The application must attempt to authenticate with discovered devices to access streams and metadata.
 
 ### 3.1 Credential Management
-- Supports list of credentials (Username/Password pairs).
-- **Rotation Logic**: Tries each credential pair sequentially until success or exhaustion.
-- **Validation**: Skips empty credentials.
+- **Credential Pool System**: Users can add multiple username/password combinations
+- **Rotation Logic**: Tries each credential pair sequentially until success or exhaustion
+- **Validation**: Skips empty credentials
+- **Bulk Assignment**: Available only in retry window for failed authentication devices
+- **Individual Assignment**: Direct credential editing in retry table
 
 ### 3.2 Authentication Modes
 - Supports and attempts three authentication types in order:
-  1.  **Digest Authentication** (Standard ONVIF)
-  2.  **Plain Text** (Weak/Legacy)
-  3.  **None/Anonymous** (Public streams)
-- **Error Handling**: Handles 401/403 errors by proceeding to next method/credential. 400 Bad Request triggers fallback.
+  1. **Digest Authentication** (Standard ONVIF)
+  2. **Plain Text** (Weak/Legacy)
+  3. **None/Anonymous** (Public streams)
+- **Error Handling**: Handles 401/403 errors by proceeding to next method/credential. 400 Bad Request triggers fallback
 
 ### 3.3 Information Retrieval
 - **ONVIF Services**:
-  - `GetDeviceInformation`: Manufacturer, Model, Serial, Firmware.
-  - `GetHostname` / `GetScopes`: Device Name.
-  - `GetSystemDateAndTime`: Calculates time drift from local system time.
+  - `GetDeviceInformation`: Manufacturer, Model, Serial, Firmware
+  - `GetHostname` / `GetScopes`: Device Name
+  - `GetSystemDateAndTime`: Calculates time drift from local system time
 
 ## 4. Stream Analysis & NVR Support
 The application must identify and validate RTSP video streams using a refactored architecture.
 
 ### 4.1 NVR/DVR Channel Extraction
-- **Method**: ONVIF `GetProfiles` via `Media Service`.
+- **Method**: ONVIF `GetProfiles` via `Media Service`
 - **Logic**:
-  - Detects multiple profiles (Main/Sub streams).
-  - Extracts channel numbers from profile names (e.g., "Channel01", "Profile_1", "Ch-1").
-  - **Expansion**: Explodes a single NVR IP into multiple "Camera" objects, one per channel.
+  - Detects multiple profiles (Main/Sub streams)
+  - Extracts channel numbers from profile names (e.g., "Channel01", "Profile_1", "Ch-1")
+  - **Expansion**: Explodes a single NVR IP into multiple "Camera" objects, one per channel
 
 ### 4.2 Stream Discovery Architecture
 - **Components**:
-  - `PatternManager`: Handles pattern loading and selection with deduplication.
-  - `RtspTester`: Manages RTSP URL testing with proper resource management.
-  - `PatternCache`: Caches successful patterns with improved cache keys.
-  - `RtspDiscoveryEngine`: Orchestrates the discovery process.
+  - `PatternManager`: Handles pattern loading and selection with deduplication
+  - `RtspTester`: Manages RTSP URL testing with proper resource management
+  - `PatternCache`: Caches successful patterns with improved cache keys
+  - `RtspDiscoveryEngine`: Orchestrates the discovery process
 
 ### 4.3 Pattern Management
 - **Pattern Priority Logic**:
-  - **MAC-Detected Manufacturers**: Use hardcoded + file patterns for better coverage.
-  - **Non-MAC Detected**: File → Hardcoded → Generic fallback.
+  - **MAC-Detected Manufacturers**: Use hardcoded + file patterns for better coverage
+  - **Non-MAC Detected**: File → Hardcoded → Generic fallback
 - **Pattern Sources**:
-  1.  `rtsp-urls.txt` (External configuration file, renamed from rtsp-patterns.txt).
-  2.  Hardcoded Patterns (Internal Map based on Manufacturer).
-  3.  Generic Fallback Patterns (`/live/main`, `/stream1`, etc.).
-- **Deduplication**: Removes duplicate patterns before testing.
-- **Caching**: Successful patterns cached with keys including manufacturer, model, IP prefix, and MAC prefix.
+  1. `rtsp-urls.txt` (External configuration file)
+  2. Hardcoded Patterns (Internal Map based on Manufacturer)
+  3. Generic Fallback Patterns (`/live/main`, `/stream1`, etc.)
+- **Deduplication**: Removes duplicate patterns before testing
+- **Caching**: Successful patterns cached with keys including manufacturer, model, IP prefix, and MAC prefix
 
 ### 4.4 RTSP Testing
-- **Tool**: JavaCV / FFmpeg (`FFmpegFrameGrabber`).
-- **Transport**: TCP (`rtsp_transport=tcp`).
-- **Timeout**: `2000 ms` per URL test (increased from 300ms).
-- **Concurrency**: Limited to 6 concurrent tests to prevent resource exhaustion.
-- **Resource Management**: Proper cleanup of FFmpeg grabbers to prevent memory leaks.
+- **Tool**: JavaCV / FFmpeg (`FFmpegFrameGrabber`)
+- **Transport**: TCP (`rtsp_transport=tcp`)
+- **Timeout**: `2000 ms` per URL test
+- **Concurrency**: Limited to 6 concurrent tests to prevent resource exhaustion
+- **Resource Management**: Proper cleanup of FFmpeg grabbers to prevent memory leaks
 - **Error Classification**:
   - Authentication Failed (401/403)
   - Path Not Found (404)
@@ -109,91 +112,206 @@ The application must identify and validate RTSP video streams using a refactored
 
 ### 4.5 Stream Probing (Verification)
 - **Metrics Collected**:
-  - Video Codec (e.g., h264, hevc).
-  - Resolution (Width x Height).
-  - Bitrate (Calculated or reported).
-  - Frame Rate (FPS).
-- **Deferred Execution**: Stream probing only occurs after successful URL discovery to optimize performance.
+  - Video Codec (e.g., h264, hevc)
+  - Resolution (Width x Height)
+  - Bitrate (Calculated or reported)
+  - Frame Rate (FPS)
+- **Deferred Execution**: Stream probing only occurs after successful URL discovery to optimize performance
 
 ## 5. User Interface & Reporting
-- **GUI**: Swing-based, Wizard style.
-- **Progress Tracking**: Real-time progress bars for Discovery, Auth, and Probing phases.
-- **Cancellation**: Support for stopping operations mid-process (Graceful shutdown).
-- **Results Display**: Enhanced table with MAC Address column for better device identification.
-- **Export**:
-  - **Format**: valid `.xlsx` file.
-  - **Library**: Apache POI.
-  - **Columns**: IP, MAC Address, Manufacturer, Model, Name, Serial, Firmware, Time Diff, Credentials, Main RTSP (URL, Res, Codec, Bitrate, FPS), Sub RTSP (URL, Res, Codec, Bitrate, FPS), Error.
-  - **Styling**: Bold headers, frozen top row, monospaced font for technical data.
 
-## 6. Logging & Monitoring
-- **Framework**: SLF4J with SimpleLogger.
-- **Configuration**: Enhanced logging with thread names, class names, and log levels.
-- **Log Files**: Timestamped log files (`cctv-discovery-YYYYMMDDHHMMSS.log`).
-- **Log Format**: `YYYY-MM-DD HH:MM:SS [LEVEL] [thread-name] ClassName - Message`.
-- **Class-Specific Logging**: Support for per-class loggers for better debugging.
+### 5.1 GUI Components
+- **Framework**: Swing-based, Wizard style
+- **Main Window**: 1024x768 resolution with application icon
+- **Panels**:
+  - `WelcomePanel`: Start screen with help button
+  - `NetworkSelectionPanel`: Network interface/IP range selection
+  - `CredentialPanel`: Credential pool management
+  - `ProgressPanel`: Real-time progress tracking
+  - `ResultsPanel`: Tabbed results display (All/Successful/Failed)
+  - `RetryCredentialPanel`: Failed device retry with bulk operations
 
-## 7. Build & Deployment Requirements
-- **JDK**: Java 8 compatible.
-- **Executable Name**: Configurable via Maven property (`executable.name`).
-- **Packaging**:
-  - `maven-assembly-plugin`: Creates fat JAR (`jar-with-dependencies`) and API-only JAR.
-  - `launch4j-maven-plugin`: Wraps JAR into Windows EXE with icon.
-  - `maven-resources-plugin`: Bundles local JRE (`jre8` folder) for portability.
-  - `maven-antrun-plugin`: Creates distribution ZIP containing EXE, JRE, and `rtsp-urls.txt`.
-- **Code Signing**:
-  - Uses `keytool-maven-plugin` to generate Self-Signed Certificate (`cert.pfx`).
-  - Uses `signtool` to sign the executable (Timestamped).
+### 5.2 Help System
+- **HelpManager**: Integrated help system
+- **User Manual**: Comprehensive HTML manual with screenshots
+- **Manual Assets**: 19 PNG images for step-by-step guidance
+- **Browser Integration**: Opens manual in default browser
 
-## 8. API Layer
+### 5.3 Progress Tracking
+- Real-time progress bars for Discovery, Auth, and Probing phases
+- **Cancellation**: Support for stopping operations mid-process (Graceful shutdown)
+- **Thread Management**: CPU core-based thread pool optimization
+
+### 5.4 Results Display
+- Enhanced table with MAC Address column for better device identification
+- **Tabbed Interface**: All Cameras, Successful, Failed
+- **Status Indicators**: Color-coded success/failure status
+- **Stream Information**: RTSP URLs, resolution, codec, bitrate, FPS
+
+## 6. Export & Reporting
+
+### 6.1 Excel Export
+- **Format**: Valid `.xlsx` file with multiple sheets
+- **Library**: Apache POI
+- **Main Sheet - Camera Data**:
+  - IP Address, MAC Address, Manufacturer, Model, Camera Name, Serial Number
+  - Firmware, Time Diff (sec), Username, Password
+  - Main RTSP (URL, Resolution, Codec, Bitrate kbps, FPS)
+  - Sub RTSP (URL, Resolution, Codec, Bitrate kbps, FPS)
+  - Error messages
+- **System Information Sheet**:
+  - Computer Name, Domain, Workgroup, Username
+  - Operating System (Name, Version, Architecture, Build)
+  - CPU (Name, Cores, Threads, Speed)
+  - Memory (Total, Available, Usage percentage)
+  - Disk Information (All drives with capacity and free space)
+  - Network Adapters (Connected adapters with MAC addresses)
+  - System Uptime, BIOS Information, Motherboard details
+  - Current Time, Time Zone, Time Server Synchronization
+- **Styling**: Bold headers, frozen top row, monospaced font for technical data
+- **Conditional Formatting**: Red highlighting for non-H.264 sub-stream codecs and invalid resolutions
+
+### 6.2 System Information Collection
+- **PowerShell Integration**: Uses modern CIM commands with ExecutionPolicy Bypass
+- **Time Server Sync**: Checks actual time difference with time.windows.com
+- **Hardware Detection**: BIOS, motherboard, and detailed system specifications
+
+## 7. Logging & Monitoring
+- **Framework**: SLF4J with SimpleLogger
+- **Configuration**: Enhanced logging with thread names, class names, and log levels
+- **Log Files**: Timestamped log files (`cctv-discovery-YYYYMMDDHHMMSS.log`)
+- **Log Format**: `YYYY-MM-DD HH:MM:SS [thread-name] [LEVEL] ClassName - Message`
+- **Class-Specific Logging**: Support for per-class loggers for better debugging
+
+## 8. Build & Deployment Requirements
+
+### 8.1 Build System
+- **JDK**: Java 8 compatible
+- **Maven Version**: 3.x
+- **Executable Name**: Configurable via Maven property (`executable.name`)
+
+### 8.2 Packaging
+- `maven-assembly-plugin`: Creates fat JAR (`jar-with-dependencies`) and API-only JAR
+- `launch4j-maven-plugin`: Wraps JAR into Windows EXE with icon
+- `maven-resources-plugin`: Bundles local JRE (`jre8` folder) for portability
+- `maven-antrun-plugin`: Creates distribution ZIP containing EXE, JRE, and `rtsp-urls.txt`
+
+### 8.3 Code Signing
+- Uses `keytool-maven-plugin` to generate Self-Signed Certificate (`cert.pfx`)
+- Uses `signtool` to sign the executable (Timestamped)
+- Certificate details: CN=CSON, OU=ON, O=Consultancy Services Ltd., L=Kolkata, S=West Bengal, C=IN
+
+### 8.4 Dependencies
+- **JavaCV**: 1.5.9 (FFmpeg 6.0 for Windows x64)
+- **Apache POI**: 5.2.3 (Excel generation)
+- **SLF4J**: 2.0.9 (Logging)
+- **Log4j to SLF4J Bridge**: 2.20.0 (Suppress POI warnings)
+- **JUnit Jupiter**: 5.10.1 (Testing)
+- **Mockito**: 5.8.0 (Mocking framework)
+
+## 9. API Layer
 The application provides a programmatic API alongside the GUI interface.
 
-### 8.1 API Components
-- **CctvDiscovery**: Main API class with builder pattern.
-- **DiscoveryEngine**: Core discovery execution engine.
-- **CameraResult/StreamResult**: API-specific result classes.
-- **JsonSerializer**: Custom JSON output without external dependencies.
-- **SimpleApiTest**: Command-line interface for API testing.
+### 9.1 API Components
+- **CctvDiscovery**: Main API class with builder pattern
+- **DiscoveryEngine**: Core discovery execution engine
+- **CameraResult/StreamResult**: API-specific result classes
+- **JsonSerializer**: Custom JSON output without external dependencies
+- **SimpleApiTest**: Command-line interface for API testing
 
-### 8.2 API Features
-- **Builder Pattern**: Fluent API for configuration.
-- **Async Support**: CompletableFuture-based async discovery.
-- **Progress Callbacks**: Real-time progress reporting.
-- **JSON Export**: Built-in JSON serialization of results.
-- **Configurable Options**: Thread count, timeouts, discovery methods.
+### 9.2 API Features
+- **Builder Pattern**: Fluent API for configuration
+- **Async Support**: CompletableFuture-based async discovery
+- **Progress Callbacks**: Real-time progress reporting
+- **JSON Export**: Built-in JSON serialization of results
+- **Configurable Options**: Thread count, timeouts, discovery methods
 
-## 9. Configuration Files
-- **`rtsp-urls.txt`**: Text file for custom RTSP URL patterns (renamed from rtsp-patterns.txt).
+## 10. Configuration Files
+- **`rtsp-urls.txt`**: Text file for custom RTSP URL patterns
   - Format per line: `main_stream_path, sub_stream_path`
-  - Comments supported with `#`.
-  - Section headers supported (e.g. `# Hikvision`) to associate patterns with manufacturers.
-- **`simplelogger.properties`**: Logger configuration with enhanced formatting.
+  - Comments supported with `#`
+  - Section headers supported (e.g. `# Hikvision`) to associate patterns with manufacturers
+- **`simplelogger.properties`**: Logger configuration with enhanced formatting
+- **`user-manual.html`**: Comprehensive user manual with embedded CSS styling
+- **`manual-assets/`**: 19 PNG images for manual illustrations
 
-## 10. Performance Optimizations
-- **Pattern Caching**: Successful patterns cached to avoid repeated testing.
-- **Resource Management**: Proper cleanup of network connections and FFmpeg resources.
-- **Thread Pool Optimization**: Limited concurrent operations to prevent resource exhaustion.
-- **Early Termination**: Discovery stops on first successful pattern match.
-- **Deduplication**: Removes duplicate patterns before testing.
+## 11. Performance Optimizations
+- **Pattern Caching**: Successful patterns cached to avoid repeated testing
+- **Resource Management**: Proper cleanup of network connections and FFmpeg resources
+- **Thread Pool Optimization**: Limited concurrent operations to prevent resource exhaustion
+- **Early Termination**: Discovery stops on first successful pattern match
+- **Deduplication**: Removes duplicate patterns before testing
+- **Port-Specific Testing**: Only tests RTSP URLs on discovered open ports
 
-## 11. User Experience & Non-Technical Overview
+## 12. Error Handling & Retry Mechanisms
+- **Retry Window**: Automatic retry panel for failed authentications
+- **Persistent Retry**: Retry window reappears until success or user skips
+- **Bulk Operations**: Select all and set credentials for multiple failed devices
+- **Error Classification**: Detailed error messages for different failure types
+- **Graceful Degradation**: Continues operation even if some components fail
+
+## 13. Security Considerations
+- **Password Handling**: Plaintext passwords in Excel exports (with warnings)
+- **Certificate Management**: Self-signed certificates for code signing
+- **Network Security**: Uses standard protocols (ONVIF, RTSP, HTTP)
+- **Credential Validation**: Input validation for usernames and passwords
+
+## 14. User Experience & Non-Technical Overview
 This section describes the application's behavior from a user's perspective, focusing on "what" it does rather than "how".
 
-### 11.1 Core Purpose
+### 14.1 Core Purpose
 The tool is designed to help technicians and security integrators quickly audit a network for CCTV cameras, identifying what devices are present, whether they are accessible, and if their video streams are configured correctly.
 
-### 11.2 Operational Flow
-1.  **Launch**: The user runs the application directly (portable) without needing to install specific drivers.
-2.  **Scan**: The user starts a discovery process. The tool automatically searches the local network for devices.
-3.  **Identify**: It identifies the brand and model of cameras (e.g., Hikvision, Dahua) and distinguishes between individual cameras and recording boxes (NVRs).
-4.  **Access**: The user provides a list of common passwords. The tool automatically tries these passwords on every found camera to see which ones work.
-5.  **Analyze**: For every accessible camera, the tool checks the video feed to report its clarity (resolution), format, and smoothness, verifying that the main high-quality stream and the lower-quality sub-stream are both working.
-6.  **Report**: The final result is a professional Excel spreadsheet listing every device, its IP address, MAC address, the password that worked, and the technical details of the video quality, ready for documentation or troubleshooting.
+### 14.2 Operational Flow
+1. **Launch**: The user runs the application directly (portable) without needing to install specific drivers
+2. **Help**: Integrated help system with comprehensive manual and screenshots
+3. **Scan**: The user starts a discovery process. The tool automatically searches the local network for devices
+4. **Identify**: It identifies the brand and model of cameras (e.g., Hikvision, Dahua) and distinguishes between individual cameras and recording boxes (NVRs)
+5. **Access**: The user provides a list of common passwords. The tool automatically tries these passwords on every found camera to see which ones work
+6. **Analyze**: For every accessible camera, the tool checks the video feed to report its clarity (resolution), format, and smoothness, verifying that the main high-quality stream and the lower-quality sub-stream are both working
+7. **Report**: The final result is a professional Excel spreadsheet with two sheets: camera data and complete system information for documentation
 
-### 11.3 Key Usability Features
--   **No Setup Required**: Works out-of-the-box on Windows.
--   **Visual Feedback**: Shows a progress bar so the user knows the tool is working and hasn't frozen.
--   **Graceful Stop**: The user can cancel the scan at any time if it's taking too long.
--   **Intelligent NVR Handling**: If an NVR is found, the tool doesn't just list the NVR; it lists every single camera channel connected to it individually.
--   **Error Clarity**: If a camera fails to connect, the tool tells the user why (e.g., "Wrong Password" vs "Device Offline") in simple terms.
--   **Enhanced Device Information**: Displays MAC addresses for better device identification and troubleshooting.
+### 14.3 Key Usability Features
+- **No Setup Required**: Works out-of-the-box on Windows with bundled JRE
+- **Visual Feedback**: Shows progress bars so the user knows the tool is working
+- **Graceful Stop**: The user can cancel the scan at any time
+- **Intelligent NVR Handling**: If an NVR is found, the tool lists every single camera channel connected to it individually
+- **Error Clarity**: If a camera fails to connect, the tool tells the user why in simple terms
+- **Enhanced Device Information**: Displays MAC addresses for better device identification and troubleshooting
+- **Comprehensive Documentation**: Built-in help system with step-by-step guidance
+- **System Audit**: Includes complete host system information in export for compliance and documentation
+
+## 15. Testing Framework
+- **Unit Tests**: JUnit 5 with Mockito for component testing
+- **Test Coverage**: OnvifDiscovery, PortScanner, SoapHelper components
+- **Integration Tests**: API layer testing with SimpleApiTest
+- **Manual Testing**: GUI workflow validation
+
+## 16. File Structure & Organization
+```
+CctvDiscovery/
+├── src/main/java/com/cctv/
+│   ├── api/           # API layer components
+│   ├── discovery/     # Core discovery engines
+│   ├── export/        # Excel export functionality
+│   ├── model/         # Data models (Camera, StreamInfo)
+│   ├── network/       # Network utilities
+│   ├── onvif/         # ONVIF protocol handling
+│   ├── probe/         # Stream analysis
+│   ├── ui/            # Swing GUI components
+│   ├── util/          # Utilities (Logger, HelpManager, SystemInfo)
+│   └── Main.java      # Application entry point
+├── src/main/resources/
+│   ├── manual-assets/ # Help system images (19 PNG files)
+│   ├── user-manual.html
+│   ├── icon.ico/png/svg
+│   └── simplelogger.properties
+├── src/test/java/     # Unit tests
+├── jre8/              # Bundled Java Runtime Environment
+├── target/            # Build outputs
+├── pom.xml            # Maven configuration
+├── requirements.txt   # This file
+└── rtsp-urls.txt      # Custom RTSP patterns
+```
+
+This comprehensive requirements document covers all aspects of the CCTV Discovery Tool based on complete project analysis, including recent enhancements for help system integration, system information collection, and improved user experience.

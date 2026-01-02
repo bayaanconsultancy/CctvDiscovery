@@ -42,7 +42,26 @@ public class ExcelExporter {
         });
 
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("CCTV Discovery");
+            // Create camera data sheet
+            Sheet cameraSheet = workbook.createSheet("CCTV Discovery");
+            createCameraSheet(cameraSheet, cameras, maskPasswords, workbook);
+            
+            // Create system info sheet
+            Sheet systemSheet = workbook.createSheet("System Information");
+            createSystemInfoSheet(systemSheet, workbook);
+
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                workbook.write(fos);
+            }
+
+            Logger.info("Excel export completed: " + filePath);
+        } catch (Exception e) {
+            Logger.error("Failed to export Excel", e);
+            throw new RuntimeException("Export failed: " + e.getMessage());
+        }
+    }
+    
+    private static void createCameraSheet(Sheet sheet, List<Camera> cameras, boolean maskPasswords, Workbook workbook) {
 
             // Add security warning if passwords are not masked
             if (!maskPasswords) {
@@ -166,16 +185,75 @@ public class ExcelExporter {
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
             }
-
-            try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                workbook.write(fos);
-            }
-
-            Logger.info("Excel export completed: " + filePath);
-        } catch (Exception e) {
-            Logger.error("Failed to export Excel", e);
-            throw new RuntimeException("Export failed: " + e.getMessage());
         }
+        
+        private static void createSystemInfoSheet(Sheet sheet, Workbook workbook) {
+            com.cctv.util.SystemInfo.HostInfo hostInfo = com.cctv.util.SystemInfo.getHostInfo();
+            
+            // Create styles
+            Font monoFont = workbook.createFont();
+            monoFont.setFontName("Consolas");
+            monoFont.setFontHeightInPoints((short) 10);
+            
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setFontName("Consolas");
+            headerFont.setFontHeightInPoints((short) 11);
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            
+            CellStyle valueStyle = workbook.createCellStyle();
+            valueStyle.setFont(monoFont);
+            
+            int rowNum = 0;
+            
+            // Title
+            Row titleRow = sheet.createRow(rowNum++);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Host System Information");
+            titleCell.setCellStyle(headerStyle);
+            rowNum++; // Empty row
+            
+            // System info rows
+            createInfoRow(sheet, rowNum++, "Computer Name", hostInfo.computerName, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Domain", hostInfo.domain, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Workgroup", hostInfo.workgroup, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Username", hostInfo.username, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Operating System", hostInfo.osName, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "OS Version", hostInfo.osVersion, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "OS Architecture", hostInfo.osArchitecture, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "OS Build", hostInfo.osBuild, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "CPU Name", hostInfo.cpuName, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "CPU Cores", hostInfo.cpuCores, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "CPU Threads", hostInfo.cpuThreads, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "CPU Speed", hostInfo.cpuSpeed, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Total Memory", hostInfo.totalMemory, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Available Memory", hostInfo.availableMemory, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Memory Usage", hostInfo.memoryUsage, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Disk Information", hostInfo.diskInfo, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Network Adapters", hostInfo.networkAdapters, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "System Uptime", hostInfo.systemUptime, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "BIOS Information", hostInfo.biosInfo, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Motherboard", hostInfo.motherboardInfo, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Current Time", hostInfo.currentTime, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Time Zone", hostInfo.timeZone, headerStyle, valueStyle);
+            createInfoRow(sheet, rowNum++, "Time Server Sync", hostInfo.timeServerDiff, headerStyle, valueStyle);
+            
+            // Auto-size columns
+            sheet.autoSizeColumn(0);
+            sheet.autoSizeColumn(1);
+        }
+        
+        private static void createInfoRow(Sheet sheet, int rowNum, String label, String value, CellStyle headerStyle, CellStyle valueStyle) {
+            Row row = sheet.createRow(rowNum);
+            
+            Cell labelCell = row.createCell(0);
+            labelCell.setCellValue(label);
+            labelCell.setCellStyle(headerStyle);
+            
+            Cell valueCell = row.createCell(1);
+            valueCell.setCellValue(value != null ? value : "Unknown");
+            valueCell.setCellStyle(valueStyle);
     }
 
     private static boolean isH264(String codec) {

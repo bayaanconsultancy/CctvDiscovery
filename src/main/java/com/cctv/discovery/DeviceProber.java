@@ -224,6 +224,11 @@ public class DeviceProber {
                         + camera.isAuthFailed() + "), trying RTSP URL patterns");
                 if (RtspUrlGuesser.tryGuessUrls(camera)) {
                     Logger.info("SUCCESS: Credential #" + (i + 1) + " worked via RTSP");
+                    // Ensure manufacturer is detected after successful RTSP discovery
+                    if (camera.getManufacturer() == null) {
+                        String manufacturer = ManufacturerDetector.detect(camera);
+                        camera.setManufacturer(manufacturer);
+                    }
                     return true;
                 }
             }
